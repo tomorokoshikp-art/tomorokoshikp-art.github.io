@@ -13,37 +13,78 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #0b0f19;
+            background: radial-gradient(circle at center, #1a1f2e 0%, #0b0f19 70%, #05080d 100%);
             min-height: 100vh;
             padding: 20px;
-            color: #333;
+            color: #e0e0e0;
+            overflow-x: hidden;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
             overflow: hidden;
+            position: relative;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
         }
 
         .header {
-            background: linear-gradient(to right, #ffa500, #ffff00);
-            color: white;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 30px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #8b5cf6, #ec4899, #06b6d4);
         }
 
         .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            font-size: 2.8rem;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+            position: relative;
+            z-index: 2;
         }
 
         .header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
+            font-size: 1.1rem;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+            position: relative;
+            z-index: 2;
         }
 
         .content {
@@ -51,136 +92,267 @@
         }
 
         .upload-section {
-            border: 3px dashed #ddd;
-            border-radius: 15px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
             padding: 40px;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             cursor: pointer;
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(10px);
             margin-bottom: 30px;
-            background-color: #fafafa;
-            pointer-events: auto;
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+        }
+
+        .upload-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-radius: 20px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         .upload-section:hover {
-            border-color: #ff0050;
-            background-color: #f0f0f0;
-            transform: translateY(-2px);
+            border-color: rgba(139, 92, 246, 0.5);
+            background: rgba(30, 41, 59, 0.6);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(139, 92, 246, 0.2);
+        }
+
+        .upload-section:hover::before {
+            opacity: 1;
         }
 
         .upload-section.dragover {
-            border-color: #ff0050;
-            background-color: #ffeef0;
+            border: 2px solid #8b5cf6;
+            background: rgba(139, 92, 246, 0.15);
+            transform: scale(1.02);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25),
+                        0 8px 32px rgba(139, 92, 246, 0.4);
+        }
+
+        .upload-section.dragover::before {
+            opacity: 0;
         }
 
         .upload-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            color: #ff0050;
+            font-size: 4.5rem;
+            margin-bottom: 24px;
+            display: block;
+            filter: drop-shadow(0 4px 8px rgba(139, 92, 246, 0.3));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
         }
 
         .upload-section h3 {
-            margin-bottom: 15px;
-            color: #333;
+            margin-bottom: 16px;
+            color: #e2e8f0;
+            font-size: 1.4rem;
+            font-weight: 600;
+            min-height: 24px;
+            transition: all 0.3s ease;
         }
 
         .upload-section p {
-            color: #666;
-            margin-bottom: 20px;
+            color: #94a3b8;
+            margin-bottom: 24px;
+            line-height: 1.5;
         }
 
-        .file-info {
-            background: #e8f5e8;
-            border: 1px solid #4caf50;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 20px 0;
-            display: none;
-        }
-
-        .file-info h4 {
-            margin-bottom: 10px;
-            color: #2e7d32;
-        }
-
-        .file-info p {
-            margin: 5px 0;
-            color: #424242;
+        .file-types {
+            margin-top: 12px;
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
         }
 
         .btn {
-            display: inline-block;
-            background: linear-gradient(to right, #ff0050, #ff6b6b);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
             color: white;
             border: none;
-            padding: 15px 30px;
+            padding: 16px 32px;
             font-size: 1.1rem;
-            border-radius: 50px;
+            font-weight: 600;
+            border-radius: 12px;
             cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255, 0, 80, 0.3);
-            text-transform: uppercase;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+            text-transform: none;
             letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            height: 52px;
+            min-width: 140px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 0, 80, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(139, 92, 246, 0.4);
+            background: linear-gradient(135deg, #a78bfa, #f472b6);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
         }
 
         .btn:disabled {
-            background: #cccccc;
+            background: #64748b;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+            opacity: 0.7;
         }
 
         .process-btn {
-            background: linear-gradient(to right, #4caf50, #8bc34a);
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
         }
 
         .process-btn:hover {
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            background: linear-gradient(135deg, #34d399, #10b981);
+            box-shadow: 0 12px 28px rgba(16, 185, 129, 0.4);
         }
 
         .download-btn {
-            background: linear-gradient(to right, #4caf50, #8bc34a);
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-            /* Ensure it looks similar to process button */
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+            display: none;
         }
 
         .download-btn:hover {
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            background: linear-gradient(135deg, #34d399, #10b981);
+            box-shadow: 0 12px 28px rgba(16, 185, 129, 0.4);
         }
 
         .progress-section {
             display: none;
-            margin: 30px 0;
+            margin: 20px 0;
+            width: 100%;
+            text-align: center;
+        }
+
+        .progress-text {
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: #e2e8f0;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
         }
 
         .progress-bar {
             width: 100%;
-            height: 20px;
-            background-color: #eee;
-            border-radius: 10px;
+            height: 12px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 6px;
             overflow: hidden;
-            margin: 15px 0;
+            margin: 12px 0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(to right, #4caf50, #8bc34a);
+            background: linear-gradient(90deg, #8b5cf6, #ec4899, #06b6d4);
             width: 0%;
-            transition: width 0.3s ease;
+            transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .progress-text {
-            text-align: center;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #333;
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .progress-percent {
+            margin-top: 8px;
+            font-weight: 600;
+            color: #8b5cf6;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.2rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .upload-section {
+                padding: 30px;
+            }
+
+            .btn {
+                padding: 14px 24px;
+                font-size: 1rem;
+                height: 48px;
+                min-width: 120px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .upload-section {
+                padding: 24px;
+            }
+
+            .upload-icon {
+                font-size: 3.5rem;
+            }
         }
     </style>
 </head>
@@ -188,6 +360,7 @@
     <div class="container">
         <div class="header">
             <h1>Corn Method</h1>
+            <p>ตอนนี้ยังเป็น BETA อยู่ยังมีบัคแอพ Alight Motion</p>
         </div>
 
         <div class="content">
@@ -196,34 +369,27 @@
                 <input type="file" id="videoFileInput" accept="video/*" style="display: none;" onchange="handleFileSelected(event)">
 
                 <!-- Drag & Drop Area (Clickable) -->
-                <div id="dropZone" style="border: 3px dashed #ddd; border-radius: 15px; padding: 40px; text-align: center; transition: all 0.3s ease; margin-bottom: 25px; background-color: #fafafa; pointer-events: auto; cursor: pointer;" onclick="document.getElementById('videoFileInput').click()">
-                    <div class="upload-icon" style="font-size: 4rem; margin-bottom: 15px; color: #ff0050;">📤</div>
-                    <h3 style="margin-bottom: 10px; color: #333;">เลือกวิดีโอที่จะอัปโหลด</h3>
-                    <p style="color: #666; margin-bottom: 0;">หรือลากแล้ววางไฟล์ที่นี่</p>
-                    <p class="file-types" style="margin-top: 10px; font-size: 0.9rem; color: #888;">Supported: MP4, MOV, WebM, AVI, MKV</p>
-                </div>
+                <div id="dropZone" style="border: 2px dashed rgba(255, 255, 255, 0.2); border-radius: 20px; padding: 40px; text-align: center; transition: all 0.4s ease; margin-bottom: 25px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); pointer-events: auto; cursor: pointer;" onclick="document.getElementById('videoFileInput').click()">
+                    <div class="upload-icon" style="font-size: 4.5rem; margin-bottom: 24px; color: #8b5cf6;">☁️</div>
+                    <h3 id="fileDisplayText" style="margin-bottom: 16px; color: #e2e8f0;">เลือกวิดีโอที่จะอัปโหลด</h3>
+                    <p style="color: #94a3b8; margin-bottom: 24px;">หรือลากแล้ววางไฟล์ที่นี่</p>
+                    <p class="file-types" style="margin-top: 12px; font-size: 0.9rem; color: #64748b;">Supported: MP4, MOV, WebM, AVI, MKV</p>
 
-                <!-- File Info Display -->
-                <div class="file-info" id="fileInfo">
-                    <h4>ชื่อไฟล์</h4>
-                    <p><strong>Name:</strong> <span id="fileName"></span></p>
-                    <p><strong>Size:</strong> <span id="fileSize"></span></p>
+                    <!-- Progress Section (moved to top) -->
+                    <div class="progress-section" id="progressSection">
+                        <div class="progress-text" id="progressText">เตรียมพร้อมสำหรับการประมวลผล...</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-percent" id="progressPercent">0%</div>
+                    </div>
                 </div>
 
                 <!-- Process Button and Download Button -->
-                <div id="processButtonContainer" style="text-align: center; margin: 25px 0;">
-                    <button class="btn process-btn" id="processBtn" disabled>เริ่ม</button>
-                    <button class="btn download-btn" id="downloadBtn" style="display: none;">ดาวน์โหลด</button>
+                <div id="processButtonContainer" style="text-align: center; margin: 28px 0;">
+                    <button class="btn process-btn" id="processBtn" disabled>เริ่มประมวลผล</button>
+                    <button class="btn download-btn" id="downloadBtn" style="display: none;">ดาวน์โหลดผลลัพธ์</button>
                 </div>
-            </div>
-
-
-            <div class="progress-section" id="progressSection">
-                <div class="progress-text" id="progressText">Preparing to process...</div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <div class="progress-text" id="progressPercent">0%</div>
             </div>
         </div>
     </div>
@@ -235,9 +401,9 @@
         const FISH_MODULE = typeof FISH !== 'undefined' ? FISH : require('./src/fish.js');
 
         const uploadSection = document.getElementById('uploadSection');
-        const fileInfo = document.getElementById('fileInfo');
-        const fileName = document.getElementById('fileName');
-        const fileSize = document.getElementById('fileSize');
+        const fileName = document.getElementById('fileName'); // Keeping for compatibility but not used
+        const fileSize = document.getElementById('fileSize'); // Keeping for compatibility but not used
+        const fileDisplayText = document.getElementById('fileDisplayText');
         const processBtn = document.getElementById('processBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const progressSection = document.getElementById('progressSection');
@@ -299,19 +465,18 @@
 
             // Validate file type
             if (!file.type.startsWith('video/')) {
-                showError('Please select a valid video file');
+                showError('กรุณาเลือกไฟล์วิดีโอที่ถูกต้อง');
                 return;
             }
 
             selectedFile = file;
-            fileName.textContent = file.name;
-            fileSize.textContent = formatFileSize(file.size);
-            fileInfo.style.display = 'block';
+            // Update the main display text to show filename and size
+            fileDisplayText.innerHTML = `📄 ${file.name} (${formatFileSize(file.size)})`;
 
             // Enable process button
             processBtn.disabled = false;
 
-            // Reset UI but keep file info visible
+            // Reset UI (progress section will be shown when processing starts)
             resetUI();
         }
 
@@ -319,9 +484,14 @@
             progressSection.style.display = 'none';
             progressFill.style.width = '0%';
             progressPercent.textContent = '0%';
-            progressText.textContent = 'Ready to process video with FISH Method...';
+            progressText.textContent = 'พร้อมประมวลผลวิดีโอด้วย FISH Method...';
             downloadBtn.style.display = 'none';
-            processBtn.style.display = 'inline-block';
+            processBtn.style.display = 'inline-flex';
+
+            // Reset file display text if no file selected
+            if (!selectedFile) {
+                fileDisplayText.textContent = 'เลือกวิดีโอที่จะอัปโหลด';
+            }
         }
 
         function formatFileSize(bytes) {
@@ -335,7 +505,7 @@
         // Process video using REAL FISH method
         async function processVideo() {
             if (!selectedFile) {
-                showError('Please select a video file first');
+                showError('กรุณาเลือกไฟล์วิดีโอก่อน');
                 return;
             }
 
@@ -347,9 +517,9 @@
                 processBtn.disabled = true;
                 downloadBtn.disabled = true;
                 downloadBtn.style.display = 'none';
-                processBtn.style.display = 'inline-block';
+                processBtn.style.display = 'inline-flex';
 
-                progressText.textContent = 'Initializing FISH processor...';
+                progressText.textContent = 'กำลังเริ่มต้น FISH processor...';
                 progressFill.style.width = '0%';
                 progressPercent.textContent = '0%';
 
@@ -371,21 +541,21 @@
 
                 // Update progress text with steps
                 const progressSteps = [
-                    'Initializing FISH processor...',
-                    'Reading MP4 file header...',
-                    'Parsing ftyp, moov, mdat atoms...',
-                    'Validating MP4 structure...',
-                    'Extracting track information...',
-                    'Applying V1 64-bit Infinite Duration Sentinel...',
-                    'Rescaling video track timescale to 48000...',
-                    'Rescaling audio track timescale to 48000...',
-                    'Injecting Zero-Offset CTTS Table...',
-                    'Adding In-track Video Anchor Sample...',
-                    'Placing Micro-Shield Stream Trap on Track 3...',
-                    'Rebuilding MP4 atoms with FISH modifications...',
-                    'Finalizing Direct Pass-Through output...',
-                    'Calculating output size...',
-                    'Processing complete!'
+                    'กำลังเริ่มต้น FISH processor...',
+                    'กำลังอ่านหัวไฟล์ MP4...',
+                    'กำลังวิเคราะห์โครงสร้าง ftyp, moov, mdat atoms...',
+                    'กำลังตรวจสอบความถูกต้องของ MP4 structure...',
+                    'กำลังดึงข้อมูล track ออกมา...',
+                    'กำลังใช้ V1 64-bit Infinite Duration Sentinel...',
+                    'กำลังปรับ timescale ของ video track เป็น 48000...',
+                    'กำลังปรับ timescale ของ audio track เป็น 48000...',
+                    'กำลังฉีด Zero-Offset CTTS Table...',
+                    'กำลังเพิ่ม In-track Video Anchor Sample...',
+                    'กำลังวาง Micro-Shield Stream Trap บน Track 3...',
+                    'กำลังสร้าง MP4 atoms ใหม่ด้วยการดัดแปลง FISH...',
+                    'กำลังทำให้ Direct Pass-Through output เสร็จสมบูรณ์...',
+                    'กำลังคำนวณขนาดไฟล์ output...',
+                    'การประมวลผลเสร็จสมบูรณ์แล้ว!'
                 ];
 
                 let stepIndex = 0;
@@ -408,7 +578,7 @@
                 // Finalize progress UI
                 progressFill.style.width = '100%';
                 progressPercent.textContent = '100%';
-                progressText.textContent = 'FISH method processing completed!';
+                progressText.textContent = 'การประมวลผลด้วย FISH method เสร็จสมบูรณ์แล้ว!';
 
                 // Create blob for download
                 const blob = new Blob([processedBuffer], { type: selectedFile.type });
@@ -433,13 +603,13 @@
                 setTimeout(() => {
                     progressSection.style.display = 'none';
                     processBtn.style.display = 'none';
-                    downloadBtn.style.display = 'inline-block';
+                    downloadBtn.style.display = 'inline-flex';
                     downloadBtn.disabled = false;
                 }, 500);
 
             } catch (error) {
                 console.error('Processing error:', error);
-                showError('Processing failed: ' + error.message);
+                showError('การประมวลผลล้มเหลว: ' + error.message);
 
                 // Re-enable process button on error
                 processBtn.disabled = false;
@@ -456,7 +626,7 @@
             initUploadSection();
         } catch (e) {
             console.error('Error initializing upload section:', e);
-            alert('Failed to initialize upload section. See console for details.');
+            alert('ไม่สามารถเริ่มต้นส่วนอัปโหลดได้ ดูรายละเอียดใน console');
         }
     </script>
 </body>
