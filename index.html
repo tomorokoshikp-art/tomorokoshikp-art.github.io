@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok HQ Upload - FISH Method & Direct Pass-Through</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(to right, #ffa500, #ffff00);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .upload-section {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 30px;
+            background-color: #fafafa;
+            pointer-events: auto;
+        }
+
+        .upload-section:hover {
+            border-color: #ff0050;
+            background-color: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        .upload-section.dragover {
+            border-color: #ff0050;
+            background-color: #ffeef0;
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #ff0050;
+        }
+
+        .upload-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .upload-section p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .file-info {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .file-info h4 {
+            margin-bottom: 10px;
+            color: #2e7d32;
+        }
+
+        .file-info p {
+            margin: 5px 0;
+            color: #424242;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(to right, #ff0050, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 0, 80, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 0, 80, 0.4);
+        }
+
+        .btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .process-btn {
+            background: linear-gradient(to right, #4caf50, #8bc34a);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .process-btn:hover {
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .download-btn {
+            background: linear-gradient(to right, #4caf50, #8bc34a);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            /* Ensure it looks similar to process button */
+        }
+
+        .download-btn:hover {
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .progress-section {
+            display: none;
+            margin: 30px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #4caf50, #8bc34a);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Corn Method</h1>
+        </div>
+
+        <div class="content">
+            <div class="upload-section" id="uploadSection">
+                <!-- Hidden File Input -->
+                <input type="file" id="videoFileInput" accept="video/*" style="display: none;" onchange="handleFileSelected(event)">
+
+                <!-- Drag & Drop Area (Clickable) -->
+                <div id="dropZone" style="border: 3px dashed #ddd; border-radius: 15px; padding: 40px; text-align: center; transition: all 0.3s ease; margin-bottom: 25px; background-color: #fafafa; pointer-events: auto; cursor: pointer;" onclick="document.getElementById('videoFileInput').click()">
+                    <div class="upload-icon" style="font-size: 4rem; margin-bottom: 15px; color: #ff0050;">📤</div>
+                    <h3 style="margin-bottom: 10px; color: #333;">เลือกวิดีโอที่จะอัปโหลด</h3>
+                    <p style="color: #666; margin-bottom: 0;">หรือลากแล้ววางไฟล์ที่นี่</p>
+                    <p class="file-types" style="margin-top: 10px; font-size: 0.9rem; color: #888;">Supported: MP4, MOV, WebM, AVI, MKV</p>
+                </div>
+
+                <!-- File Info Display -->
+                <div class="file-info" id="fileInfo">
+                    <h4>ชื่อไฟล์</h4>
+                    <p><strong>Name:</strong> <span id="fileName"></span></p>
+                    <p><strong>Size:</strong> <span id="fileSize"></span></p>
+                </div>
+
+                <!-- Process Button and Download Button -->
+                <div id="processButtonContainer" style="text-align: center; margin: 25px 0;">
+                    <button class="btn process-btn" id="processBtn" disabled>เริ่ม</button>
+                    <button class="btn download-btn" id="downloadBtn" style="display: none;">ดาวน์โหลด</button>
+                </div>
+            </div>
+
+
+            <div class="progress-section" id="progressSection">
+                <div class="progress-text" id="progressText">Preparing to process...</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressPercent">0%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load FISH Method Engine -->
+    <script src="/src/fish.js"></script>
+    <script>
+        // Initialize FISH module
+        const FISH_MODULE = typeof FISH !== 'undefined' ? FISH : require('./src/fish.js');
+
+        const uploadSection = document.getElementById('uploadSection');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const processBtn = document.getElementById('processBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const progressSection = document.getElementById('progressSection');
+        const progressText = document.getElementById('progressText');
+        const progressFill = document.getElementById('progressFill');
+        const progressPercent = document.getElementById('progressPercent');
+        const dropZone = document.getElementById('dropZone');
+
+        let selectedFile = null;
+        let startTime = null;
+
+        // Initialize upload section
+        function initUploadSection() {
+            console.log('initUploadSection called');
+            if (!dropZone) {
+                console.error('dropZone element not found');
+                return;
+            }
+            console.log('dropZone found');
+            // Process button click
+            processBtn.addEventListener('click', () => {
+                processVideo();
+            });
+
+            // Drag and drop - Enhanced with proper event handling
+            dropZone.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('dragover');
+                handleFileSelected(e);
+            });
+        }
+
+        function handleFileSelected(e) {
+            const file = e.target.files ? e.target.files[0] : (e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files[0] : null);
+            if (!file) {
+                console.log('No file selected');
+                return;
+            }
+            console.log('File selected:', file.name);
+
+            // Validate file type
+            if (!file.type.startsWith('video/')) {
+                showError('Please select a valid video file');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.style.display = 'block';
+
+            // Enable process button
+            processBtn.disabled = false;
+
+            // Reset UI but keep file info visible
+            resetUI();
+        }
+
+        function resetUI() {
+            progressSection.style.display = 'none';
+            progressFill.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressText.textContent = 'Ready to process video with FISH Method...';
+            downloadBtn.style.display = 'none';
+            processBtn.style.display = 'inline-block';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Process video using REAL FISH method
+        async function processVideo() {
+            if (!selectedFile) {
+                showError('Please select a video file first');
+                return;
+            }
+
+            startTime = Date.now();
+
+            try {
+                // Show progress section
+                progressSection.style.display = 'block';
+                processBtn.disabled = true;
+                downloadBtn.disabled = true;
+                downloadBtn.style.display = 'none';
+                processBtn.style.display = 'inline-block';
+
+                progressText.textContent = 'Initializing FISH processor...';
+                progressFill.style.width = '0%';
+                progressPercent.textContent = '0%';
+
+                // Read file as ArrayBuffer
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                const originalSize = arrayBuffer.byteLength;
+
+                // Simulate processing steps for UI feedback while doing real FISH processing
+                const totalSteps = 100;
+                let currentStep = 0;
+
+                // Update progress bar periodically
+                const progressInterval = setInterval(() => {
+                    currentStep = Math.min(currentStep + 1, totalSteps - 1);
+                    const progressPercent = (currentStep / totalSteps) * 100;
+                    progressFill.style.width = progressPercent + '%';
+                    progressPercent.textContent = Math.round(progressPercent) + '%';
+                }, 50); // Update every 50ms
+
+                // Update progress text with steps
+                const progressSteps = [
+                    'Initializing FISH processor...',
+                    'Reading MP4 file header...',
+                    'Parsing ftyp, moov, mdat atoms...',
+                    'Validating MP4 structure...',
+                    'Extracting track information...',
+                    'Applying V1 64-bit Infinite Duration Sentinel...',
+                    'Rescaling video track timescale to 48000...',
+                    'Rescaling audio track timescale to 48000...',
+                    'Injecting Zero-Offset CTTS Table...',
+                    'Adding In-track Video Anchor Sample...',
+                    'Placing Micro-Shield Stream Trap on Track 3...',
+                    'Rebuilding MP4 atoms with FISH modifications...',
+                    'Finalizing Direct Pass-Through output...',
+                    'Calculating output size...',
+                    'Processing complete!'
+                ];
+
+                let stepIndex = 0;
+                const stepInterval = setInterval(() => {
+                    if (stepIndex < progressSteps.length) {
+                        progressText.textContent = progressSteps[stepIndex];
+                        stepIndex++;
+                    }
+                }, 200); // Change step every 200ms
+
+                // Process with REAL FISH method
+                const processedBuffer = FISH_MODULE.patchMp4Fish(arrayBuffer, (message) => {
+                    // Logging removed
+                });
+
+                // Stop progress simulations
+                clearInterval(progressInterval);
+                clearInterval(stepInterval);
+
+                // Finalize progress UI
+                progressFill.style.width = '100%';
+                progressPercent.textContent = '100%';
+                progressText.textContent = 'FISH method processing completed!';
+
+                // Create blob for download
+                const blob = new Blob([processedBuffer], { type: selectedFile.type });
+                const url = URL.createObjectURL(blob);
+
+                // Setup download
+                downloadBtn.onclick = () => {
+                    const fileNameParts = selectedFile.name.split('.');
+                    const extension = fileNameParts.pop();
+                    const nameWithoutExt = fileNameParts.join('.');
+                    const downloadName = `${nameWithoutExt}_Corn_Method.${extension}`;
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = downloadName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                };
+
+                // Show download button after delay
+                setTimeout(() => {
+                    progressSection.style.display = 'none';
+                    processBtn.style.display = 'none';
+                    downloadBtn.style.display = 'inline-block';
+                    downloadBtn.disabled = false;
+                }, 500);
+
+            } catch (error) {
+                console.error('Processing error:', error);
+                showError('Processing failed: ' + error.message);
+
+                // Re-enable process button on error
+                processBtn.disabled = false;
+            }
+        }
+
+        function showError(message) {
+            alert(message);
+            resetUI();
+        }
+
+        // Initialize
+        try {
+            initUploadSection();
+        } catch (e) {
+            console.error('Error initializing upload section:', e);
+            alert('Failed to initialize upload section. See console for details.');
+        }
+    </script>
+</body>
+</html>
