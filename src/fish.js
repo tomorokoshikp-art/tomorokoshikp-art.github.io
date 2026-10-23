@@ -1,7 +1,3 @@
-// Core FISH (Cutefish FISH Architecture Engine) Implementation
-// Adapted from the original TikTok HQ Upload FISH method
-// This provides 100% lossless MP4 atom restructuring for TikTok compatibility
-
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
     typeof define === 'function' && define.amd ? define(factory) :
@@ -170,9 +166,29 @@
         mvhdDv.setUint32(108, 4, false); // next_track_id = 4
         const newMvhdBox = makeBox('mvhd', newMvhdPayload);
 
-        // 2. Video & Audio Tracks
-        const videoTrak = traks[0];
-        const audioTrak = traks.length > 1 ? traks[1] : null;
+        // 2. Video & Audio Tracks - detect by handler type (robust for Alight Motion)
+        function getTrackHandlerType(trakBox) {
+            const hdlr = findDeep(buf, trakBox.contentStart, trakBox.end, 'hdlr');
+            if (!hdlr) return null;
+            // hdlr content: version(1) + flags(3) + pre_defined(4) + handler_type(4) + ...
+            return String.fromCharCode(
+                buf[hdlr.contentStart + 8],
+                buf[hdlr.contentStart + 9],
+                buf[hdlr.contentStart + 10],
+                buf[hdlr.contentStart + 11]
+            );
+        }
+
+        let videoTrak = null;
+        let audioTrak = null;
+        for (const trak of traks) {
+            const handlerType = getTrackHandlerType(trak);
+            if (handlerType === 'vide' && !videoTrak) videoTrak = trak;
+            else if (handlerType === 'soun' && !audioTrak) audioTrak = trak;
+        }
+        // Fallback: if detection failed, use position-based (original behavior)
+        if (!videoTrak) videoTrak = traks[0];
+        if (!audioTrak && traks.length > 1) audioTrak = traks[1];
 
         const vSttsBox = findDeep(buf, videoTrak.contentStart, videoTrak.end, 'stts');
         const vStscBox = findDeep(buf, videoTrak.contentStart, videoTrak.end, 'stsc');
@@ -184,10 +200,21 @@
             throw new Error('Video stbl atoms (stts/stsc/stsz/stco) not found.');
         }
 
+        // Handle both stco (32-bit) and co64 (64-bit) chunk offset tables
+        const isCo64 = vStcoBox.type === 'co64';
+        const entrySize = isCo64 ? 8 : 4;
         const vChunkCount = readU32(buf, vStcoBox.contentStart + 4);
         const vRelOffsets = [];
         for (let i = 0; i < vChunkCount; i++) {
-            const off = readU32(buf, vStcoBox.contentStart + 8 + i * 4);
+            const entryOffset = vStcoBox.contentStart + 8 + i * entrySize;
+            let off;
+            if (isCo64) {
+                const high = readU32(buf, entryOffset);
+                const low = readU32(buf, entryOffset + 4);
+                off = high * 4294967296 + low;
+            } else {
+                off = readU32(buf, entryOffset);
+            }
             vRelOffsets.push(off - origMdatContentStart);
         }
 
@@ -198,9 +225,19 @@
             aStsdBox = findDeep(buf, audioTrak.contentStart, audioTrak.end, 'stsd');
             aStcoBox = findDeep(buf, audioTrak.contentStart, audioTrak.end, 'stco') || findDeep(buf, audioTrak.contentStart, audioTrak.end, 'co64');
             if (aStcoBox) {
+                const isACo64 = aStcoBox.type === 'co64';
+                const aEntrySize = isACo64 ? 8 : 4;
                 aChunkCount = readU32(buf, aStcoBox.contentStart + 4);
                 for (let i = 0; i < aChunkCount; i++) {
-                    const off = readU32(buf, aStcoBox.contentStart + 8 + i * 4);
+                    const entryOffset = aStcoBox.contentStart + 8 + i * aEntrySize;
+                    let off;
+                    if (isACo64) {
+                        const high = readU32(buf, entryOffset);
+                        const low = readU32(buf, entryOffset + 4);
+                        off = high * 4294967296 + low;
+                    } else {
+                        off = readU32(buf, entryOffset);
+                    }
                     aRelOffsets.push(off - origMdatContentStart);
                 }
             }
@@ -251,8 +288,8 @@
             newCttsPayload[0] = buf[vCttsBox.contentStart];
             cttsDv.setUint32(4, origCttsEntries + 1, false);
             newCttsPayload.set(buf.subarray(vCttsBox.contentStart + 8, vCttsBox.contentStart + 8 + origCttsEntries * 8), 8);
-            cttsDv.setUint32(8 + origVSttsEntries * 8, 1, false);
-            cttsDv.setUint32(8 + origVSttsEntries * 8 + 4, 0, false);
+            cttsDv.setUint32(8 + origCttsEntries * 8, 1, false);
+            cttsDv.setUint32(8 + origCttsEntries * 8 + 4, 0, false);
             newVCttsBox = makeBox('ctts', newCttsPayload);
         } else {
             const newCttsPayload = new Uint8Array(8 + 2 * 8);
@@ -342,6 +379,27 @@
         const t3Dref = makeBox('dref', drefPayload);
         const t3Dinf = makeBox('dinf', t3Dref);
 
+        // Helper to build stco or co64 box based on offset sizes
+        function makeStcoBox(offsets, originalType) {
+            const needsCo64 = originalType === 'co64' || offsets.some(off => off > 0xFFFFFFFF);
+            const entrySize = needsCo64 ? 8 : 4;
+            const payload = new Uint8Array(8 + offsets.length * entrySize);
+            const dv = new DataView(payload.buffer);
+            dv.setUint32(4, offsets.length, false);
+            for (let i = 0; i < offsets.length; i++) {
+                const base = 8 + i * entrySize;
+                if (needsCo64) {
+                    const high = Math.floor(offsets[i] / 4294967296);
+                    const low = offsets[i] % 4294967296;
+                    dv.setUint32(base, high, false);
+                    dv.setUint32(base + 4, low, false);
+                } else {
+                    dv.setUint32(base, offsets[i], false);
+                }
+            }
+            return makeBox(needsCo64 ? 'co64' : 'stco', payload);
+        }
+
         const vStblBox = findDeep(buf, videoTrak.contentStart, videoTrak.end, 'stbl');
         const vStblChildren = parseBoxes(buf, vStblBox.contentStart, vStblBox.end);
         const vMinfBox = findDeep(buf, videoTrak.contentStart, videoTrak.end, 'minf');
@@ -359,15 +417,9 @@
             const anchorChunkOffset = newMdatContentStart + origMdatPayload.length;
             const outMdatChunkOffset = anchorChunkOffset + inMdatAnchor.length;
 
-            // Video STCO
-            const newVStcoPayload = new Uint8Array(8 + (vChunkCount + 1) * 4);
-            const vStcoDv = new DataView(newVStcoPayload.buffer);
-            vStcoDv.setUint32(4, vChunkCount + 1, false);
-            for (let i = 0; i < vChunkCount; i++) {
-                vStcoDv.setUint32(8 + i * 4, vRelOffsets[i] + newMdatContentStart, false);
-            }
-            vStcoDv.setUint32(8 + vChunkCount * 4, anchorChunkOffset, false);
-            const newVStcoBox = makeBox('stco', newVStcoPayload);
+            // Video STCO - use helper to auto-detect stco vs co64
+            const newVStcoOffsets = [...vRelOffsets.map(off => off + newMdatContentStart), anchorChunkOffset];
+            const newVStcoBox = makeStcoBox(newVStcoOffsets, vStcoBox.type);
 
             // Reassemble Video STBL
             const vStblParts = [];
@@ -416,13 +468,8 @@
             // Audio Track 2 with rescaled tkhd and edts + updated stco
             let newATrak = null;
             if (audioTrak && aStcoBox) {
-                const newAStcoPayload = new Uint8Array(8 + aChunkCount * 4);
-                const aStcoDv = new DataView(newAStcoPayload.buffer);
-                aStcoDv.setUint32(4, aChunkCount, false);
-                for (let i = 0; i < aChunkCount; i++) {
-                    aStcoDv.setUint32(8 + i * 4, aRelOffsets[i] + newMdatContentStart, false);
-                }
-                const newAStcoBox = makeBox('stco', newAStcoPayload);
+                const newAStcoOffsets = aRelOffsets.map(off => off + newMdatContentStart);
+                const newAStcoBox = makeStcoBox(newAStcoOffsets, aStcoBox.type);
 
                 const aStblBox = findDeep(buf, audioTrak.contentStart, audioTrak.end, 'stbl');
                 const aStblChildren = parseBoxes(buf, aStblBox.contentStart, aStblBox.end);
@@ -462,12 +509,8 @@
                 newATrak = makeBox('trak', concatArrays(aTrakParts));
             }
 
-            // Track 3
-            const t3StcoPayload = new Uint8Array(12);
-            const t3StcoDv = new DataView(t3StcoPayload.buffer);
-            t3StcoDv.setUint32(4, 1, false);
-            t3StcoDv.setUint32(8, outMdatChunkOffset, false);
-            const t3Stco = makeBox('stco', t3StcoPayload);
+            // Track 3 - use helper for consistency
+            const t3Stco = makeStcoBox([outMdatChunkOffset], 'stco');
 
             const t3Stbl = makeBox('stbl', concatArrays([t3Stsd, t3Stts, t3Stsz, t3Stsc, t3Stco]));
             const t3Minf = makeBox('minf', concatArrays([t3Smhd, t3Dinf, t3Stbl]));
