@@ -1,8 +1,9 @@
-(function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-    typeof define === 'function' && define.amd ? define(factory) :
-    (global.FISH = factory());
-})(this, (function () { 'use strict';
+// Core FISH (Cutefish FISH Architecture Engine) Implementation
+// Adapted from the original TikTok HQ Upload FISH method
+// This provides 100% lossless MP4 atom restructuring for TikTok compatibility
+
+(function () {
+    'use strict';
 
     // Helper functions for reading/writing uint32
     function readU32(arr, off) {
@@ -534,8 +535,8 @@
         return finalOutput;
     }
 
-    return {
+    // Export to window for browser usage
+    window.FISH = {
         patchMp4Fish: patchMp4Fish
     };
-
-}));
+})();
