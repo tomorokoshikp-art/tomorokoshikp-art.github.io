@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Corn Method</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,8 +14,8 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0b0f19;
-            background: radial-gradient(circle at center, #1a1f2e 0%, #0b0f19 70%, #05080d 100%);
+            background: #111827;
+            background: radial-gradient(circle at center, #374151 0%, #1f2937 70%, #111827 100%);
             min-height: 100vh;
             padding: 20px;
             color: #e0e0e0;
@@ -24,7 +25,7 @@
         .container {
             max-width: 900px;
             margin: 0 auto;
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(31, 41, 55, 0.6);
             backdrop-filter: blur(20px);
             border-radius: 24px;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -44,7 +45,7 @@
         }
 
         .header {
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(31, 41, 55, 0.8);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 30px;
@@ -60,21 +61,30 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, #8b5cf6, #ec4899, #06b6d4);
+            background: linear-gradient(135deg, #ef4444, #f97316, #eab308, #22c55e, #06b6d4, #8b5cf6, #ec4899, #ef4444);
+            background-size: 400% 400%;
+            animation: rainbowBorderFlow 4s ease-in-out infinite;
         }
 
         .header h1 {
-            font-size: 2.8rem;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.8rem;
             margin-bottom: 12px;
-            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            background: linear-gradient(110deg, #facc15 0%, #fef08a 25%, #eab308 50%, #ffffff 75%, #ca8a04 100%);
+            background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            text-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+            font-weight: 400;
+            letter-spacing: 2px;
+            animation: goldShine 3s linear infinite, goldPulse 2.5s ease-in-out infinite;
+            transition: transform 0.3s ease;
             position: relative;
             z-index: 2;
+        }
+
+        .header h1:hover {
+            transform: scale(1.03);
         }
 
         .header p {
@@ -92,62 +102,127 @@
         }
 
         .upload-section {
-            border: 2px dashed rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 40px;
-            text-align: center;
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            cursor: pointer;
-            background: rgba(30, 41, 59, 0.4);
-            backdrop-filter: blur(10px);
+            padding: 0;
             margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
             min-height: 200px;
         }
 
-        .upload-section::before {
+        .drop-zone {
+            border: none;
+            border-radius: 20px;
+            padding: 30px;
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('tuye.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            margin-bottom: 25px;
+            position: relative;
+            pointer-events: auto;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75);
+            min-height: 280px;
+            height: 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .drop-zone-top {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            margin-top: 0;
+        }
+
+        .drop-zone-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            min-height: 120px;
+            padding-top: 60px; /* locks file name vertical position */
+        }
+
+        .drop-zone::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border: 2px solid rgba(139, 92, 246, 0.3);
+            inset: 0;
             border-radius: 20px;
+            padding: 3px;
+            background: linear-gradient(135deg, #ef4444, #f97316, #eab308, #22c55e, #06b6d4, #8b5cf6, #ec4899, #ef4444);
+            background-size: 400% 400%;
+            animation: rainbowBorderFlow 4s ease-in-out infinite;
+            -webkit-mask:
+                linear-gradient(#fff 0 0) padding-box,
+                linear-gradient(#fff 0 0) content-box;
+            -webkit-mask-composite: xor;
+            mask:
+                linear-gradient(#fff 0 0) padding-box,
+                linear-gradient(#fff 0 0) content-box;
+            mask-composite: exclude;
             pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            z-index: -1;
         }
 
-        .upload-section:hover {
-            border-color: rgba(139, 92, 246, 0.5);
-            background: rgba(30, 41, 59, 0.6);
+        .drop-zone:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(139, 92, 246, 0.2);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75), 0 12px 24px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 0, 0, 0.2);
+            background-image: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), url('tuye.jpg');
         }
 
-        .upload-section:hover::before {
-            opacity: 1;
+        @keyframes rainbowBorderFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        .upload-section.dragover {
-            border: 2px solid #8b5cf6;
-            background: rgba(139, 92, 246, 0.15);
+        @keyframes tiktokGlowFlow {
+            0% {
+                box-shadow: 0 0 15px rgba(0, 242, 254, 0.6), 0 0 30px rgba(254, 44, 85, 0.4);
+                border-color: rgba(0, 242, 254, 0.8);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(254, 44, 85, 0.7), 0 0 15px rgba(0, 242, 254, 0.5);
+                border-color: rgba(254, 44, 85, 0.8);
+            }
+            100% {
+                box-shadow: 0 0 15px rgba(0, 242, 254, 0.6), 0 0 30px rgba(254, 44, 85, 0.4);
+                border-color: rgba(0, 242, 254, 0.8);
+            }
+        }
+
+        @keyframes goldShine {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        @keyframes goldPulse {
+            0%, 100% {
+                filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.5)) drop-shadow(0 0 20px rgba(234, 179, 8, 0.3));
+            }
+            50% {
+                filter: drop-shadow(0 0 20px rgba(254, 240, 138, 0.8)) drop-shadow(0 0 35px rgba(250, 204, 21, 0.6));
+            }
+        }
+
+        .drop-zone.dragover {
             transform: scale(1.02);
-            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25),
-                        0 8px 32px rgba(139, 92, 246, 0.4);
-        }
-
-        .upload-section.dragover::before {
-            opacity: 0;
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9),
+                        inset 0 0 20px rgba(255, 255, 255, 0.2);
         }
 
         .upload-icon {
             font-size: 4.5rem;
             margin-bottom: 24px;
             display: block;
-            filter: drop-shadow(0 4px 8px rgba(139, 92, 246, 0.3));
+            color: #ffffff;
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7));
             animation: float 3s ease-in-out infinite;
         }
 
@@ -158,24 +233,27 @@
 
         .upload-section h3 {
             margin-bottom: 16px;
-            color: #e2e8f0;
+            color: #ffffff;
             font-size: 1.4rem;
             font-weight: 600;
             min-height: 24px;
             transition: all 0.3s ease;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
         }
 
         .upload-section p {
-            color: #94a3b8;
+            color: #ffffff;
             margin-bottom: 24px;
             line-height: 1.5;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
         }
 
         .file-types {
             margin-top: 12px;
             font-size: 0.9rem;
-            color: #64748b;
+            color: #ffffff;
             font-weight: 500;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
         }
 
         .btn {
@@ -183,8 +261,8 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            background: linear-gradient(135deg, #8b5cf6, #ec4899);
-            color: white;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #1a1f2e;
             border: none;
             padding: 16px 32px;
             font-size: 1.1rem;
@@ -192,7 +270,7 @@
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
             text-transform: none;
             letter-spacing: 0.5px;
             position: relative;
@@ -218,8 +296,8 @@
 
         .btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 12px 28px rgba(139, 92, 246, 0.4);
-            background: linear-gradient(135deg, #a78bfa, #f472b6);
+            box-shadow: 0 12px 28px rgba(245, 158, 11, 0.4);
+            background: linear-gradient(135deg, #fbbf24, #fde68a);
         }
 
         .btn:active {
@@ -236,28 +314,53 @@
 
         .process-btn {
             background: linear-gradient(135deg, #10b981, #059669);
-            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+            color: #ffffff;
         }
 
         .process-btn:hover {
             background: linear-gradient(135deg, #34d399, #10b981);
-            box-shadow: 0 12px 28px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 12px 28px rgba(16, 185, 129, 0.5);
+            color: #ffffff;
         }
 
         .download-btn {
-            background: linear-gradient(135deg, #10b981, #059669);
-            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+            background: linear-gradient(135deg, #ef4444, #f97316, #eab308, #22c55e, #06b6d4, #8b5cf6, #ec4899, #ef4444);
+            background-size: 400% 400%;
+            box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4), 0 0 20px rgba(239, 68, 68, 0.3);
             display: none;
+            animation: rainbowButtonFlow 4s ease-in-out infinite;
+            color: #ffffff;
         }
 
         .download-btn:hover {
-            background: linear-gradient(135deg, #34d399, #10b981);
-            box-shadow: 0 12px 28px rgba(16, 185, 129, 0.4);
+            background: linear-gradient(135deg, #f97316, #eab308, #22c55e, #06b6d4, #8b5cf6, #ec4899, #ef4444, #f97316);
+            box-shadow: 0 12px 40px rgba(249, 115, 22, 0.5), 0 0 30px rgba(249, 115, 22, 0.4);
+            transform: translateY(-3px);
+            color: #ffffff;
+        }
+
+        .tiktok-btn {
+            background: linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 100%);
+            box-shadow:
+                0 8px 32px rgba(0, 242, 254, 0.4),
+                0 0 25px rgba(254, 44, 85, 0.3);
+            display: none;
+            color: #ffffff;
+            border: 1px solid rgba(0, 242, 254, 0.4);
+            animation: tiktokGlowFlow 3s ease-in-out infinite;
+        }
+
+        .tiktok-btn:hover {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #2d0f2e 100%);
+            transform: translateY(-3px);
+            color: #ffffff;
+            border-color: rgba(254, 44, 85, 0.7);
         }
 
         .progress-section {
             display: none;
-            margin: 20px 0;
+            margin: 0;
             width: 100%;
             text-align: center;
         }
@@ -283,12 +386,14 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #8b5cf6, #ec4899, #06b6d4);
+            background: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #06b6d4, #8b5cf6, #ec4899);
+            background-size: 300% 100%;
             width: 0%;
             transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             border-radius: 6px;
             position: relative;
             overflow: hidden;
+            animation: rainbowFlow 3s linear infinite;
         }
 
         .progress-fill::after {
@@ -302,23 +407,33 @@
             animation: shimmer 2s infinite;
         }
 
-        .progress-percent {
-            margin-top: 8px;
-            font-weight: 600;
-            color: #8b5cf6;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-        }
-
         @keyframes shimmer {
             0% { transform: translateX(-100%); }
             100% { transform: translateX(100%); }
         }
 
+        @keyframes rainbowFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes goldShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes rainbowButtonFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .header h1 {
-                font-size: 2.2rem;
+                font-size: 1.5rem;
             }
 
             .content {
@@ -339,7 +454,7 @@
 
         @media (max-width: 480px) {
             .header h1 {
-                font-size: 1.8rem;
+                font-size: 1.2rem;
             }
 
             .header p {
@@ -360,7 +475,7 @@
     <div class="container">
         <div class="header">
             <h1>Corn Method</h1>
-            <p>V1.1</p>
+            <p>V1.1 beta</p>
         </div>
 
         <div class="content">
@@ -369,19 +484,18 @@
                 <input type="file" id="videoFileInput" accept="video/*" style="display: none;" onchange="handleFileSelected(event)">
 
                 <!-- Drag & Drop Area (Clickable) -->
-                <div id="dropZone" style="border: 2px dashed rgba(255, 255, 255, 0.2); border-radius: 20px; padding: 40px; text-align: center; transition: all 0.4s ease; margin-bottom: 25px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); pointer-events: auto; cursor: pointer;" onclick="document.getElementById('videoFileInput').click()">
-                    <div class="upload-icon" style="font-size: 4.5rem; margin-bottom: 24px; color: #8b5cf6;">☁️</div>
-                    <h3 id="fileDisplayText" style="margin-bottom: 16px; color: #e2e8f0;">เลือกวิดีโอที่จะอัปโหลด</h3>
-                    <p style="color: #94a3b8; margin-bottom: 24px;">หรือลากแล้ววางไฟล์ที่นี่</p>
-                    <p class="file-types" style="margin-top: 12px; font-size: 0.9rem; color: #64748b;">Supported: MP4, MOV, WebM, AVI, MKV</p>
-
-                    <!-- Progress Section (moved to top) -->
-                    <div class="progress-section" id="progressSection">
+                <div id="dropZone" class="drop-zone" onclick="document.getElementById('videoFileInput').click()">
+                    <div class="drop-zone-top">
+                        <div class="upload-icon" style="font-size: 4.5rem; color: #8b5cf6; margin-bottom: 6px;">☁️</div>
+                        <h3 id="fileDisplayText" style="margin-bottom: 2px; font-size: 1.5rem; font-weight: 700; color: #e2e8f0;">เลือกวิดีโอที่จะอัปโหลด</h3>
+                        <p id="dragDropText" style="margin-top: 0; margin-bottom: 0;">หรือลากแล้ววางไฟล์ที่นี่</p>
+                        <p class="file-types" style="margin-top: 2px; font-size: 0.8rem; opacity: 0.8; padding-bottom: 10px;">Supported: MP4, MOV, WebM, AVI, MKV</p>
+                    </div>
+                    <div class="progress-section" id="progressSection" style="display:none; margin:0;">
                         <div class="progress-text" id="progressText">เตรียมพร้อมสำหรับการประมวลผล...</div>
                         <div class="progress-bar">
                             <div class="progress-fill" id="progressFill"></div>
                         </div>
-                        <div class="progress-percent" id="progressPercent">0%</div>
                     </div>
                 </div>
 
@@ -389,6 +503,10 @@
                 <div id="processButtonContainer" style="text-align: center; margin: 28px 0;">
                     <button class="btn process-btn" id="processBtn" disabled>เริ่ม</button>
                     <button class="btn download-btn" id="downloadBtn" style="display: none;">ดาวน์โหลด</button>
+                    <button class="btn tiktok-btn" id="tiktokBtn" style="display: none;" onclick="window.open('https://www.tiktok.com/tiktokstudio/upload', '_blank')">
+                    <img src="tiktok logo.png" alt="TikTok Logo" style="width: 20px; height: 20px; object-fit: contain; margin-right: 8px; flex-shrink: 0;">
+                    เปิด TikTok Studio
+                </button>
                 </div>
             </div>
         </div>
@@ -397,20 +515,22 @@
     <!-- Load FISH Method Engine -->
     <script src="/src/fish.js"></script>
     <script>
-        // Initialize FISH module
-        const FISH_MODULE = typeof FISH !== 'undefined' ? FISH : require('./src/fish.js');
+        // Initialize FISH module (browser global)
+        const FISH_MODULE = window.FISH;
 
         const uploadSection = document.getElementById('uploadSection');
         const fileName = document.getElementById('fileName'); // Keeping for compatibility but not used
         const fileSize = document.getElementById('fileSize'); // Keeping for compatibility but not used
         const fileDisplayText = document.getElementById('fileDisplayText');
+        const dragDropText = document.getElementById('dragDropText');
         const processBtn = document.getElementById('processBtn');
         const downloadBtn = document.getElementById('downloadBtn');
+        const tiktokBtn = document.getElementById('tiktokBtn');
         const progressSection = document.getElementById('progressSection');
         const progressText = document.getElementById('progressText');
         const progressFill = document.getElementById('progressFill');
-        const progressPercent = document.getElementById('progressPercent');
         const dropZone = document.getElementById('dropZone');
+        const fileTypes = document.querySelector('.file-types');
 
         let selectedFile = null;
         let startTime = null;
@@ -473,6 +593,16 @@
             // Update the main display text to show filename and size
             fileDisplayText.innerHTML = `📄 ${file.name} (${formatFileSize(file.size)})`;
 
+            // Hide drag & drop text when file is selected
+            dragDropText.style.opacity = '0';
+            dragDropText.style.visibility = 'hidden';
+
+            // Hide file types and show progress section in its place
+            if (fileTypes) {
+                fileTypes.style.display = 'none';
+            }
+            progressSection.style.display = 'block';
+
             // Enable process button
             processBtn.disabled = false;
 
@@ -483,14 +613,32 @@
         function resetUI() {
             progressSection.style.display = 'none';
             progressFill.style.width = '0%';
-            progressPercent.textContent = '0%';
-            progressText.textContent = 'พร้อมประมวลผลวิดี';
+            progressFill.textContent = '';
+            progressFill.style.display = '';
+            progressFill.style.alignItems = '';
+            progressFill.style.justifyContent = '';
+            progressFill.style.color = '';
+            progressFill.style.fontWeight = '';
+            progressFill.style.fontSize = '';
+            progressText.style.display = '';
+            progressText.textContent = 'พร้อมประมวลผลวิดีโอด้วย FISH Method...';
+            // Show outer progress-bar container
+            const progressBar = progressFill.parentElement;
+            if (progressBar) progressBar.style.display = '';
             downloadBtn.style.display = 'none';
+            downloadBtn.textContent = 'ดาวน์โหลด';
+            tiktokBtn.style.display = 'none';
             processBtn.style.display = 'inline-flex';
 
             // Reset file display text if no file selected
             if (!selectedFile) {
                 fileDisplayText.textContent = 'เลือกวิดีโอที่จะอัปโหลด';
+                dragDropText.style.opacity = '1';
+                dragDropText.style.visibility = 'visible';
+            }
+            // Restore file types text
+            if (fileTypes) {
+                fileTypes.style.display = 'block';
             }
         }
 
@@ -510,18 +658,36 @@
             }
 
             startTime = Date.now();
+            const minProgressDuration = 1000; // Minimum 1 second for progress bar
+            const progressStartTime = Date.now();
 
             try {
                 // Show progress section
                 progressSection.style.display = 'block';
+                if (fileTypes) {
+                    fileTypes.style.display = 'none';
+                }
                 processBtn.disabled = true;
                 downloadBtn.disabled = true;
                 downloadBtn.style.display = 'none';
                 processBtn.style.display = 'inline-flex';
 
-                progressText.textContent = 'กำลังเริ่มต้น FISH processor...';
-                progressFill.style.width = '0%';
-                progressPercent.textContent = '0%';
+                // Reset file display text to just filename (remove green completion text)
+                fileDisplayText.innerHTML = `📄 ${selectedFile.name} (${formatFileSize(selectedFile.size)})`;
+
+                progressText.textContent = '';
+                progressText.style.display = '';
+                progressFill.style.width = '';
+                progressFill.textContent = '';
+                progressFill.style.display = '';
+                progressFill.style.alignItems = '';
+                progressFill.style.justifyContent = '';
+                progressFill.style.color = '';
+                progressFill.style.fontWeight = '';
+                progressFill.style.fontSize = '';
+                // Show outer progress-bar container
+                const progressBar = progressFill.parentElement;
+                if (progressBar) progressBar.style.display = '';
 
                 // Read file as ArrayBuffer
                 const arrayBuffer = await selectedFile.arrayBuffer();
@@ -536,26 +702,11 @@
                     currentStep = Math.min(currentStep + 1, totalSteps - 1);
                     const progressPercent = (currentStep / totalSteps) * 100;
                     progressFill.style.width = progressPercent + '%';
-                    progressPercent.textContent = Math.round(progressPercent) + '%';
                 }, 50); // Update every 50ms
 
                 // Update progress text with steps
                 const progressSteps = [
-                    'กำลังเริ่มต้น FISH processor...',
-                    'กำลังอ่านหัวไฟล์ MP4...',
-                    'กำลังวิเคราะห์โครงสร้าง ftyp, moov, mdat atoms...',
-                    'กำลังตรวจสอบความถูกต้องของ MP4 structure...',
-                    'กำลังดึงข้อมูล track ออกมา...',
-                    'กำลังใช้ V1 64-bit Infinite Duration Sentinel...',
-                    'กำลังปรับ timescale ของ video track เป็น 48000...',
-                    'กำลังปรับ timescale ของ audio track เป็น 48000...',
-                    'กำลังฉีด Zero-Offset CTTS Table...',
-                    'กำลังเพิ่ม In-track Video Anchor Sample...',
-                    'กำลังวาง Micro-Shield Stream Trap บน Track 3...',
-                    'กำลังสร้าง MP4 atoms ใหม่ด้วยการดัดแปลง FISH...',
-                    'กำลังทำให้ Direct Pass-Through output เสร็จสมบูรณ์...',
-                    'กำลังคำนวณขนาดไฟล์ output...',
-                    'การประมวลผลเสร็จสมบูรณ์แล้ว!'
+
                 ];
 
                 let stepIndex = 0;
@@ -567,7 +718,7 @@
                 }, 200); // Change step every 200ms
 
                 // Process with REAL FISH method
-                const processedBuffer = FISH_MODULE.patchMp4Fish(arrayBuffer, (message) => {
+                const processedBuffer = await FISH_MODULE.patchMp4Fish(arrayBuffer, (message) => {
                     // Logging removed
                 });
 
@@ -575,10 +726,40 @@
                 clearInterval(progressInterval);
                 clearInterval(stepInterval);
 
-                // Finalize progress UI
-                progressFill.style.width = '100%';
-                progressPercent.textContent = '100%';
-                progressText.textContent = 'การประมวลผลด้วย FISH method เสร็จสมบูรณ์แล้ว!';
+                // Ensure minimum progress duration (cooldown)
+                const elapsed = Date.now() - progressStartTime;
+                if (elapsed < minProgressDuration) {
+                    // Continue animating to 100% during cooldown
+                    const remainingSteps = totalSteps - currentStep;
+                    const cooldownInterval = setInterval(() => {
+                        currentStep = Math.min(currentStep + 1, totalSteps);
+                        const progressPercent = (currentStep / totalSteps) * 100;
+                        progressFill.style.width = progressPercent + '%';
+                        if (currentStep >= totalSteps) {
+                            clearInterval(cooldownInterval);
+                        }
+                    }, (minProgressDuration - elapsed) / remainingSteps);
+
+                    // Wait for cooldown to complete
+                    await new Promise(resolve => setTimeout(resolve, minProgressDuration - elapsed));
+                } else {
+                    // Still animate to 100% if not there yet
+                    while (currentStep < totalSteps) {
+                        currentStep++;
+                        const progressPercent = (currentStep / totalSteps) * 100;
+                        progressFill.style.width = progressPercent + '%';
+                        await new Promise(resolve => setTimeout(resolve, 20));
+                    }
+                }
+
+                // Ensure progress bar reaches 100% visually (wait for CSS transition)
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                // Finalize progress UI - hide progress section
+                progressSection.style.display = 'none';
+
+                // Show "เสร็จแล้ว" in green at file display text
+                fileDisplayText.innerHTML = `📄 ${selectedFile.name} (${formatFileSize(selectedFile.size)}) <span style="color: #4ade80; font-weight: 600; margin-left: 8px; text-shadow: 0 0 8px rgba(74, 222, 128, 0.6);">✓ เสร็จแล้ว</span>`;
 
                 // Create blob for download
                 const blob = new Blob([processedBuffer], { type: selectedFile.type });
@@ -597,15 +778,17 @@
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
+
+                    // Replace download button with TikTok button
+                    downloadBtn.style.display = 'none';
+                    tiktokBtn.style.display = 'inline-flex';
                 };
 
-                // Show download button after delay
-                setTimeout(() => {
-                    progressSection.style.display = 'none';
-                    processBtn.style.display = 'none';
-                    downloadBtn.style.display = 'inline-flex';
-                    downloadBtn.disabled = false;
-                }, 500);
+                // Show download button immediately (no delay)
+                processBtn.style.display = 'none';
+                downloadBtn.style.display = 'inline-flex';
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = 'ดาวน์โหลด';
 
             } catch (error) {
                 console.error('Processing error:', error);
