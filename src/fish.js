@@ -1,7 +1,3 @@
-// Core FISH (Cutefish FISH Architecture Engine) Implementation
-// Adapted from the original TikTok HQ Upload FISH method
-// This provides 100% lossless MP4 atom restructuring for TikTok compatibility
-
 (function () {
     'use strict';
 
