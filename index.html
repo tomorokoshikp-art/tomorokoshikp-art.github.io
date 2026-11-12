@@ -462,17 +462,7 @@
 
             resize();
             createStars();
-            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-                // Draw one static frame, no animation loop.
-                stars.forEach(s => {
-                    ctx.beginPath();
-                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(255, 255, 255, ${s.opacity * 0.7})`;
-                    ctx.fill();
-                });
-            } else {
-                animate();
-            }
+            animate();
             window.addEventListener('resize', () => { resize(); createStars(); });
         })();
 
