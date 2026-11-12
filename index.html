@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Corn Method</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-deep: #090a0f;
@@ -15,6 +17,7 @@
 
             --accent-blue: #00b4ff;
             --accent-blue-light: #33d0ff;
+            --accent-orange: #ff8800;
 
             --fg-primary: #ffffff;
             --fg-secondary: #a0a5b5;
@@ -24,7 +27,7 @@
             --radius-xl: 28px;
             --radius-2xl: 36px;
 
-            --font-ui: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            --font-ui: 'Plus Jakarta Sans', 'Noto Sans Thai', 'Sarabun', Tahoma, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         }
 
         * {
@@ -37,6 +40,7 @@
             font-family: var(--font-ui);
             background: var(--bg-deep);
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -48,7 +52,10 @@
         /* Starfield background */
         #starfield {
             position: fixed;
-            inset: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             width: 100%;
             height: 100%;
             z-index: -1;
@@ -107,7 +114,7 @@
         .drop-zone.dragover {
             border-color: var(--accent-orange);
             background: rgba(45, 50, 70, 0.85);
-            scale: 1.01;
+            transform: scale(1.01);
         }
 
         /* Upload Icon Badge */
@@ -208,7 +215,10 @@
         .btn-tiktok::before {
             content: '';
             position: absolute;
-            inset: -2px;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
             border-radius: inherit;
             background: linear-gradient(45deg, #00f2fe, #ff0000);
             z-index: -1;
@@ -227,6 +237,30 @@
             box-shadow: none !important;
         }
 
+        /* Compatibility / engine-load banner */
+        .compat {
+            display: none;
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            border-radius: var(--radius-lg);
+            background: rgba(255, 136, 0, 0.12);
+            border: 1px solid rgba(255, 136, 0, 0.4);
+            color: #ffc27a;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+        .compat.error {
+            background: rgba(255, 68, 68, 0.12);
+            border-color: rgba(255, 68, 68, 0.45);
+            color: #ff9a9a;
+        }
+
+        .drop-zone:focus-visible, .btn:focus-visible {
+            outline: 2px solid var(--accent-blue-light);
+            outline-offset: 3px;
+        }
+
         /* File info text when selected */
         .file-info {
             display: none;
@@ -234,6 +268,7 @@
             font-size: 0.85rem;
             color: var(--accent-blue);
             font-weight: 600;
+            word-break: break-all;
         }
     </style>
 </head>
@@ -244,7 +279,10 @@
     <div class="main-card">
         <span class="header-tag">tiktok อย่าแก้บ่อย ขก.แก้ตาม🙏</span>
 
-        <input type="file" id="videoFileInput" class="file-input" accept="video/*">
+        <div id="compat" class="compat" role="alert"></div>
+        <noscript><div class="compat error" style="display:block">ต้องเปิดใช้งาน JavaScript ก่อนจึงจะใช้งานได้</div></noscript>
+
+        <input type="file" id="videoFileInput" class="file-input" accept="video/*,.mp4,.m4v,.mov">
 
         <div id="dropZone" class="drop-zone" role="button" tabindex="0">
             <div class="icon-badge">
@@ -265,24 +303,111 @@
             <button class="btn btn-primary" id="processBtn" disabled>เริ่ม</button>
             <button class="btn btn-primary" id="downloadBtn" style="display: none;">ดาวน์โหลดไฟล์</button>
             <button class="btn btn-tiktok" id="tiktokBtn" style="display: none;">
-                <img src="tiktok logo.png" alt="" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;">
+                <img src="tiktok%20logo.png" alt="" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;">
                 เปิด TikTok Studio
             </button>
         </div>
     </div>
 
-    <!-- Engine JS -->
+    <!-- Engine JS (ES modules; versions pinned so a CDN update can't break the page) -->
     <script type="importmap">
     {
         "imports": {
-            "mediabunny": "https://cdn.jsdelivr.net/npm/mediabunny/+esm",
-            "@mediabunny/prores": "https://cdn.jsdelivr.net/npm/@mediabunny/prores/+esm"
+            "mediabunny": "https://cdn.jsdelivr.net/npm/mediabunny@1.65.2/+esm",
+            "@mediabunny/prores": "https://cdn.jsdelivr.net/npm/@mediabunny/prores@1.65.2/+esm"
         }
     }
     </script>
+    <script nomodule>
+        // Browsers without ES-module support never run the module script below.
+        (function () {
+            var el = document.getElementById('compat');
+            el.className = 'compat error';
+            el.style.display = 'block';
+            el.textContent = 'เบราว์เซอร์นี้เก่าเกินไป กรุณาอัปเดตหรือใช้ Chrome / Edge / Safari / Firefox เวอร์ชันล่าสุด';
+        })();
+    </script>
     <script type="module">
-        import { convert, DEFAULT_RECIPE } from '/src/pipeline.js';
-        window.FISH = { convert, DEFAULT_RECIPE };
+        // The engine is written in TypeScript (src/*.ts). Browsers can't run .ts, and GitHub Pages serves it
+        // with a non-JavaScript MIME type, so we fetch each file as text, strip the types in the browser with
+        // the TypeScript compiler, and import the result through blob: URLs.
+        const TS_URL = 'https://cdn.jsdelivr.net/npm/typescript@5.6.3/lib/typescript.js';
+        const ENTRY = './src/pipeline.ts';
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const el = document.createElement('script');
+                el.src = src;
+                el.onload = resolve;
+                el.onerror = () => reject(new Error('โหลดตัวแปลง TypeScript ไม่ได้ (' + src + ')'));
+                document.head.appendChild(el);
+            });
+        }
+
+        const cache = new Map(); // absolute URL -> Promise<blob URL>
+
+        function loadTsModule(url) {
+            if (cache.has(url)) return cache.get(url);
+            const job = (async () => {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('โหลดไฟล์ ' + url + ' ไม่สำเร็จ (HTTP ' + res.status + ')');
+                const source = await res.text();
+                let js = window.ts.transpileModule(source, {
+                    fileName: url,
+                    reportDiagnostics: false,
+                    compilerOptions: {
+                        target: window.ts.ScriptTarget.ES2020,
+                        module: window.ts.ModuleKind.ESNext,
+                        verbatimModuleSyntax: false,
+                        isolatedModules: true,
+                    },
+                }).outputText;
+
+                // Rewrite relative imports ("./patch", "./patch.js", "./patch.ts") to blob URLs of the compiled dependency.
+                const re = /(from\s*|import\s*\(\s*|import\s+)(["'])(\.{1,2}\/[^"']+)\2/g;
+                const deps = new Map();
+                let m;
+                while ((m = re.exec(js)) !== null) {
+                    const raw = m[3];
+                    if (deps.has(raw)) continue;
+                    const base = raw.replace(/\.(js|ts)$/, '');
+                    deps.set(raw, new URL(base + '.ts', url).href);
+                }
+                const resolved = new Map();
+                for (const [raw, abs] of deps) resolved.set(raw, await loadTsModule(abs));
+                js = js.replace(re, (all, pre, q, raw) => pre + q + resolved.get(raw) + q);
+
+                return URL.createObjectURL(new Blob([js], { type: 'text/javascript' }));
+            })();
+            cache.set(url, job);
+            return job;
+        }
+
+        async function loadEngine() {
+            if (!window.ts) await loadScript(TS_URL);
+            const entry = await loadTsModule(new URL(ENTRY, document.baseURI).href);
+            const { convert, DEFAULT_RECIPE } = await import(entry);
+            window.FISH = { convert, DEFAULT_RECIPE };
+            return window.FISH;
+        }
+
+        if (window.showCompat && document.getElementById('compat').style.display !== 'block') {
+            window.showCompat('กำลังโหลดเอนจิน (ครั้งแรกอาจใช้เวลาสักครู่)...', false);
+        }
+        window.FISH_PROMISE = loadEngine()
+            .then((fish) => {
+                if (window.hideCompat) window.hideCompat('กำลังโหลดเอนจิน');
+                return fish;
+            })
+            .catch((err) => {
+                console.error('Engine load failed:', err);
+                window.FISH_ERROR = err;
+                if (window.showCompat) {
+                    window.showCompat('โหลดเอนจินไม่สำเร็จ: ' + (err && err.message ? err.message : err) + ' — ตรวจสอบอินเทอร์เน็ต แล้วรีเฟรชหน้า', true);
+                }
+                throw err;
+            });
+        window.FISH_PROMISE.catch(() => {});
     </script>
     <script>
         // Starfield background effect
@@ -339,7 +464,17 @@
 
             resize();
             createStars();
-            animate();
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                // Draw one static frame, no animation loop.
+                stars.forEach(s => {
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${s.opacity * 0.7})`;
+                    ctx.fill();
+                });
+            } else {
+                animate();
+            }
             window.addEventListener('resize', () => { resize(); createStars(); });
         })();
 
@@ -352,114 +487,51 @@
         const progressContainer = document.getElementById('progressContainer');
         const progressBar = document.getElementById('progressBar');
         const progressText = document.getElementById('progressText');
+        const tiktokBtn = document.getElementById('tiktokBtn');
+
+        const compat = document.getElementById('compat');
+        window.showCompat = function (msg, isError) {
+            compat.textContent = msg;
+            compat.className = 'compat' + (isError ? ' error' : '');
+            compat.style.display = 'block';
+        };
+
+        window.hideCompat = function (startsWith) {
+            if (!startsWith || compat.textContent.indexOf(startsWith) === 0) compat.style.display = 'none';
+        };
+
+        // Capability check: encoding needs WebCodecs (video + audio encoders).
+        (function () {
+            const hasModules = 'noModule' in HTMLScriptElement.prototype;
+            const hasImportMap = !(window.HTMLScriptElement && HTMLScriptElement.supports) || HTMLScriptElement.supports('importmap');
+            if (hasModules && !hasImportMap) {
+                window.showCompat('เบราว์เซอร์นี้ไม่รองรับ import map กรุณาอัปเดตเบราว์เซอร์เป็นเวอร์ชันล่าสุด', true);
+                return;
+            }
+            const missing = [];
+            if (typeof window.VideoEncoder === 'undefined') missing.push('VideoEncoder');
+            if (typeof window.AudioEncoder === 'undefined') missing.push('AudioEncoder');
+            if (typeof window.VideoDecoder === 'undefined') missing.push('VideoDecoder');
+            if (missing.length) {
+                window.showCompat('เบราว์เซอร์นี้ไม่รองรับ WebCodecs (' + missing.join(', ') + ') จึงแปลงวิดีโอไม่ได้ แนะนำให้อัปเดตหรือใช้ Chrome / Edge เวอร์ชันล่าสุดบนคอมพิวเตอร์', true);
+            }
+        })();
 
         let selectedFile = null;
 
-        function handleFile(file) {
-            if (!file.type.startsWith('video/')) {
-                alert('กรุณาเลือกไฟล์วิดีโอ');
-                return;
-            }
-            selectedFile = file;
-            fileInfo.style.display = 'block';
-            fileInfo.textContent = `ไฟล์ที่เลือก: ${file.name}`;
-            processBtn.disabled = false;
-            progressContainer.style.display = 'none';
-            downloadBtn.style.display = 'none';
-            processBtn.textContent = 'เริ่มประมวลผล';
+        const VIDEO_EXT = /\.(mp4|m4v|mov|qt|mkv|webm|3gp)$/i;
+
+        function isVideo(file) {
+            // Some browsers/OSes (Windows, Firefox, some Android) leave file.type empty for .mov, so fall back to the extension.
+            return (file.type && file.type.startsWith('video/')) || VIDEO_EXT.test(file.name || '');
         }
 
-        dropZone.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
-            }
-        });
+        function resetResult() {
+            const old = downloadBtn.dataset.url;
+            if (old) URL.revokeObjectURL(old);
+            delete downloadBtn.dataset.url;
+            tiktokBtn.style.display = 'none';
+            processBtn.style.display = '';
+        }
 
-        // Drag and drop handlers
-        ['dragenter', 'dragover'].forEach(evt => {
-            dropZone.addEventListener(evt, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropZone.classList.add('dragover');
-            });
-        });
-        ['dragleave', 'drop'].forEach(evt => {
-            dropZone.addEventListener(evt, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropZone.classList.remove('dragover');
-            });
-        });
-        dropZone.addEventListener('drop', (e) => {
-            if (e.dataTransfer.files.length > 0) {
-                handleFile(e.dataTransfer.files[0]);
-            }
-        });
-
-        processBtn.addEventListener('click', async () => {
-            if (!selectedFile) return;
-            processBtn.disabled = true;
-            processBtn.textContent = 'กำลังประมวลผล...';
-            progressContainer.style.display = 'block';
-            progressBar.style.width = '0%';
-            progressText.textContent = 'กำลังอ่านไฟล์...';
-
-            try {
-                if (!window.FISH) throw new Error('โหลดเอนจินไม่สำเร็จ (ตรวจสอบอินเทอร์เน็ต)');
-
-                const result = await window.FISH.convert(selectedFile, window.FISH.DEFAULT_RECIPE, (stage) => {
-                    if (typeof stage.progress === 'number') {
-                        progressBar.style.width = Math.round(stage.progress * 100) + '%';
-                        progressText.textContent = `${stage.label}... ${Math.round(stage.progress * 100)}%`;
-                    } else {
-                        progressText.textContent = stage.label + '...';
-                    }
-                });
-
-                progressBar.style.width = '100%';
-                progressText.textContent = 'ประมวลผลเสร็จสิ้น';
-
-                const url = URL.createObjectURL(result.blob);
-                downloadBtn.dataset.url = url;
-                downloadBtn.dataset.name = selectedFile.name.replace(/\.[^/.]+$/, '') + '_Corn_Method.mp4';
-
-                setTimeout(() => {
-                    progressContainer.style.display = 'none';
-                    processBtn.style.display = 'none';
-                    downloadBtn.style.display = 'inline-flex';
-                }, 500);
-
-            } catch (err) {
-                console.error(err);
-                progressText.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
-                progressBar.style.background = '#ff4444';
-                processBtn.disabled = false;
-                processBtn.textContent = 'ลองใหม่';
-            }
-        });
-
-        const tiktokBtn = document.getElementById('tiktokBtn');
-
-        downloadBtn.addEventListener('click', () => {
-            const url = downloadBtn.dataset.url;
-            const name = downloadBtn.dataset.name || 'Corn_Method.mp4';
-            if (!url) return;
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = name;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-
-            // Hide download button, show TikTok button
-            downloadBtn.style.display = 'none';
-            tiktokBtn.style.display = 'inline-flex';
-        });
-
-        tiktokBtn.addEventListener('click', () => {
-            window.open('https://www.tiktok.com/tiktokstudio/upload', '_blank', 'noopener,noreferrer');
-        });
-    </script>
-</body>
-</html>
+        function handleFile
