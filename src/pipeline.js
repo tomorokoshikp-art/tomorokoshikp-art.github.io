@@ -2,7 +2,7 @@
  * The whole conversion, in the browser: optional clean re-encode (WebCodecs, through Mediabunny), then the
  * container patches from ./patch, then a read-back check. Mirrors the desktop app's `make` flow and lab mode.
  */
-import { ALL_FORMATS, BlobSource, BufferTarget, Conversion, Input, Mp4OutputFormat, Output, Quality, canEncodeVideo, } from "mediabunny";
+import { ALL_FORMATS, BlobSource, BufferTarget, Conversion, Input, Mp4OutputFormat, Output, Quality, canEncodeAudio, canEncodeVideo, } from "mediabunny";
 import { ALL_PATCHES, DEFAULT_PATCH, OqmError, REFERENCE, isPatchReady, patchVideo } from "./patch.js";
 import { silentTail } from "./silentTail.js";
 export const DEFAULT_ENCODE = {
@@ -171,6 +171,7 @@ async function reencodeOnce(file, src, e, audioBps, onStage, signal, stereo = fa
     if (!(await canEncodeVideo(e.codec, { width, height, frameRate: fps, quality: videoQuality }))) {
         throw new OqmError(`This browser can't encode ${e.codec === "hevc" ? "H.265" : "H.264"} at ${width}x${height}, ${fps.toFixed(2)} fps with these settings. Try the 1080p preset or a lower bitrate.`);
     }
+    const aacEncodable = !src.hasAudio || (await canEncodeAudio("aac", { numberOfChannels: stereo ? 2 : Math.min(src.channels, 2), sampleRate: 48000, bitrate: audioBps }).catch(() => false));
     const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
     const output = new Output({ format: new Mp4OutputFormat({ fastStart: "in-memory" }), target: new BufferTarget() });
     try {
@@ -191,7 +192,10 @@ async function reencodeOnce(file, src, e, audioBps, onStage, signal, stereo = fa
                 hardwareAcceleration: e.hardware,
                 forceTranscode: true,
             },
-            audio: { codec: "aac", bitrate: audioBps, sampleRate: 48000, ...(stereo ? { numberOfChannels: 2 } : {}), forceTranscode: true },
+            // Edge/Chrome on Windows often has no AAC encoder. Then keep the source audio as-is (stream copy) instead of failing.
+            audio: aacEncodable
+                ? { codec: "aac", bitrate: audioBps, sampleRate: 48000, ...(stereo ? { numberOfChannels: 2 } : {}), forceTranscode: true }
+                : { forceTranscode: false },
             // The desktop app strips metadata on export (-map_metadata -1).
             tags: () => ({}),
         });
