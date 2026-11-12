@@ -227,7 +227,7 @@ async function reencode(file: Blob, src: Probe, e: EncodeOptions, onStage: (s: S
 }
 
 async function reencodeOnce(file: Blob, src: Probe, e: EncodeOptions, audioBps: number, onStage: (s: Stage) => void, signal?: AbortSignal, stereo = false) {
-  if (src.hdr) throw new OqmError("HDR/wide-gamut re-encoding needs explicit colour conversion. Use an SDR master; test HDR separately.");
+  if (src.hdr) throw new OqmError("HDR/wide-gamut กำลังโหลด needs explicit colour conversion. Use an SDR master; test HDR separately.");
   if (typeof VideoEncoder === "undefined") {
     throw new OqmError("This browser can't encode video. Use a recent Chrome, Edge or Safari, or turn off re-encode in the options.");
   }
@@ -264,7 +264,7 @@ async function reencodeOnce(file: Blob, src: Probe, e: EncodeOptions, audioBps: 
       // The desktop app strips metadata on export (-map_metadata -1).
       tags: () => ({}),
     });
-    await runConversion(conversion, onStage, "Re-encoding", signal);
+    await runConversion(conversion, onStage, "กำลังโหลด", signal);
   } finally {
     input.dispose();
   }
