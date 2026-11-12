@@ -195,7 +195,7 @@ async function runConversion(conversion: Conversion, onStage: (s: Stage) => void
   const discarded = conversion.discardedTracks.filter((d) => d.track.type === "video" || d.track.type === "audio");
   if (!conversion.isValid || discarded.length) {
     const why = discarded.map((d) => `${d.track.type}: ${d.reason.replace(/_/g, " ")}`).join(", ");
-    throw new OqmError(`This browser can't convert that file (${why}). Export an SDR H.264 MP4 with AAC audio, or use the desktop app.`);
+    throw new OqmError(`เบราว์เซอร์ไม่รองรับให้เปลี่ยนไปใช้ Chrome แทน`);
   }
   const abort = () => void conversion.cancel().catch(() => {});
   signal?.addEventListener("abort", abort);
