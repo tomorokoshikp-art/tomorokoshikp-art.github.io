@@ -1,7 +1,3 @@
-/**
- * The whole conversion, in the browser: optional clean re-encode (WebCodecs, through Mediabunny), then the
- * container patches from ./patch, then a read-back check. Mirrors the desktop app's `make` flow and lab mode.
- */
 import {
   ALL_FORMATS,
   BlobSource,
@@ -108,7 +104,7 @@ export type ConvertResult = {
 
 const even = (n: number) => Math.max(2, Math.round(n / 2) * 2);
 
-type Probe = { width: number; height: number; fps: number; duration: number; codec: string; packets: number; hasAudio: boolean; channels: number; mbps: number; hdr: boolean };
+type Probe = { width: number; height: number; fps: number; duration: number; codec: string; packets: number; hasAudio: boolean; audioCodec: string; channels: number; mbps: number; hdr: boolean };
 
 async function probe(blob: Blob): Promise<Probe> {
   const input = new Input({ source: new BlobSource(blob), formats: ALL_FORMATS });
@@ -125,6 +121,7 @@ async function probe(blob: Blob): Promise<Probe> {
       codec: (await video.getCodecParameterString()) ?? video.codec ?? "unknown",
       packets: stats.packetCount,
       hasAudio: !!audio,
+      audioCodec: audio ? ((await audio.getCodecParameterString()) ?? audio.codec ?? "unknown") : "",
       channels: audio?.numberOfChannels ?? 0,
       mbps: stats.averageBitrate / 1e6,
       hdr: ["pq", "hlg", "smpte2084", "arib-std-b67"].includes((await video.getColorSpace()).transfer ?? "")
@@ -240,6 +237,7 @@ async function reencodeOnce(file: Blob, src: Probe, e: EncodeOptions, audioBps: 
   if (!(await canEncodeVideo(e.codec, { width, height, frameRate: fps, quality: videoQuality }))) {
     throw new OqmError(`This browser can't encode ${e.codec === "hevc" ? "H.265" : "H.264"} at ${width}x${height}, ${fps.toFixed(2)} fps with these settings. Try the 1080p preset or a lower bitrate.`);
   }
+  const keepAudio = src.hasAudio && src.audioCodec === "mp4a.40.2" && (!stereo || src.channels === 2);
   const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
   const output = new Output({ format: new Mp4OutputFormat({ fastStart: "in-memory" }), target: new BufferTarget() });
   try {
@@ -260,7 +258,9 @@ async function reencodeOnce(file: Blob, src: Probe, e: EncodeOptions, audioBps: 
         hardwareAcceleration: e.hardware,
         forceTranscode: true,
       },
-      audio: { codec: "aac", bitrate: audioBps, sampleRate: 48000, ...(stereo ? { numberOfChannels: 2 } : {}), forceTranscode: true },
+      // Keep the original audio untouched when it is already AAC-LC (and stereo where the recipe needs it): no AudioEncoder
+      // is involved, so browsers without a working AAC encoder (e.g. Edge) still work. Otherwise fall back to AAC re-encode.
+      audio: keepAudio ? {} : { codec: "aac", bitrate: audioBps, sampleRate: 48000, ...(stereo ? { numberOfChannels: 2 } : {}), forceTranscode: true },
       // The desktop app strips metadata on export (-map_metadata -1).
       tags: () => ({}),
     });
