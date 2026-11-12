@@ -1,11 +1,3 @@
-/**
- * OQM container patches, in the browser. A port of program/oqm/mp4.py and program/oqm/patches.py; keep the two in step.
- *
- * Every patch is a named, toggleable step. None of them touch the compressed video or primary audio bytes: the
- * output is a Blob stitched from the input's own `mdat` byte range plus a rewritten `moov`, so it is lossless by
- * construction and a large file does not need to be copied through memory.
- */
-
 const CONTAINERS = new Set(["moov", "trak", "mdia", "minf", "stbl", "edts", "dinf", "udta", "mvex"]);
 
 export type PatchId =
