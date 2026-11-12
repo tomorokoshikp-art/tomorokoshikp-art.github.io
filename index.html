@@ -396,7 +396,6 @@
         }
         window.FISH_PROMISE = loadEngine()
             .then((fish) => {
-                if (window.hideCompat) window.hideCompat('กำลังโหลดเอนจิน');
                 return fish;
             })
             .catch((err) => {
