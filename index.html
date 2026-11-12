@@ -592,11 +592,7 @@
             progressBar.style.background = 'linear-gradient(90deg, var(--accent-blue), var(--accent-blue-light))';
             progressText.textContent = 'กำลังอ่านไฟล์...';
 
-            try {
-                if (!window.FISH) {
-                    progressText.textContent = 'กำลังโหลดเอนจิน...';
-                    if (!window.FISH_PROMISE) throw new Error('โหลดเอนจินไม่สำเร็จ (ตรวจสอบอินเทอร์เน็ต แล้วรีเฟรชหน้า)');
-                    await window.FISH_PROMISE;
+
                 }
 
                 const result = await window.FISH.convert(selectedFile, window.FISH.DEFAULT_RECIPE, (stage) => {
