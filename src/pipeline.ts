@@ -203,6 +203,11 @@ async function runConversion(conversion: Conversion, onStage: (s: Stage) => void
   try {
     await conversion.execute();
     if (signal?.aborted) throw new OqmError("Stopped.");
+  } catch (error) {
+    // Mobile browsers throw raw decoder/encoder errors here (e.g. "Decoding error."); show the same message as desktop.
+    if (signal?.aborted || error instanceof OqmError) throw error;
+    console.error(error);
+    throw new OqmError(`เบราว์เซอร์ไม่รองรับให้เปลี่ยนไปใช้ Chrome แทน`);
   } finally {
     signal?.removeEventListener("abort", abort);
   }
