@@ -11,14 +11,35 @@ import {
   Mp4OutputFormat,
   Output,
   Quality,
-  canEncodeAudio,
   canEncodeVideo,
 } from "mediabunny";
-import { ALL_PATCHES, DEFAULT_PATCH, OqmError, REFERENCE, isPatchReady, patchVideo, } from "./patch.js";
+import { ALL_PATCHES, DEFAULT_PATCH, OqmError, REFERENCE, isPatchReady, patchVideo, type Check, type PatchOptions } from "./patch";
 
-import { silentTail } from "./silentTail.js";
+import { silentTail } from "./silentTail";
 
-export const DEFAULT_ENCODE = {
+export type SizeMode = "original" | "short-720" | "short-1080" | "short-1440" | "short-2160";
+export type RateMode = "quantizer" | "bitrate" | "very-high" | "high";
+
+export type EncodeOptions = {
+  reencode: boolean;
+  codec: "avc" | "hevc";
+  rate: RateMode;
+  /** Like FFmpeg's CRF: lower is better. 0-51. */
+  quantizer: number;
+  /** Used when rate = "bitrate", quantizer fallback uses a size/frame-rate estimate. */
+  mbps: number;
+  size: SizeMode;
+  /** null preserves timing; source-max-60 caps high-rate sources without duplicating lower-rate frames. */
+  fps: number | "source-max-60" | null;
+  /** Seconds between keyframes. 0 = one keyframe at the start only (long GOP, like the reference tool). */
+  keyframeSec: number;
+  audioKbps: number;
+  hardware: "no-preference" | "prefer-hardware" | "prefer-software";
+};
+
+export type Recipe = { method?: "legacy" | "silent-tail"; encode: EncodeOptions; patch: PatchOptions };
+
+export const DEFAULT_ENCODE: EncodeOptions = {
   reencode: true,
   codec: "avc",
   rate: "quantizer",
@@ -32,19 +53,37 @@ export const DEFAULT_ENCODE = {
 };
 
 /** Silent-tail is the website default; encode first so supported MOV inputs become compatible H.264/AAC MP4. */
-export const DEFAULT_RECIPE = { method: "silent-tail", encode: DEFAULT_ENCODE, patch: { ...DEFAULT_PATCH, enabled: [] } };
+export const DEFAULT_RECIPE: Recipe = { method: "silent-tail", encode: DEFAULT_ENCODE, patch: { ...DEFAULT_PATCH, enabled: [] } };
 
-const withPatches = (enabled , encode = {}) => ({
+/** Compare effective settings, not JSON property order or options the selected method does not use. */
+export function sameRecipe(a: Recipe, b: Recipe): boolean {
+  const method = a.method ?? "legacy";
+  if (method !== (b.method ?? "legacy") || a.encode.reencode !== b.encode.reencode) return false;
+  if (a.encode.reencode) {
+    const keys: (keyof EncodeOptions)[] = ["codec", "rate", "size", "fps", "keyframeSec", "audioKbps", "hardware"];
+    if (a.encode.rate === "quantizer") keys.push("quantizer");
+    if (a.encode.rate === "bitrate") keys.push("mbps");
+    if (keys.some(key => a.encode[key] !== b.encode[key])) return false;
+  }
+  if (method === "silent-tail") return true;
+  const keys: (keyof Omit<PatchOptions, "enabled">)[] = ["inflate", "dummySize", "encoderTag", "trailingBytes"];
+  return keys.every(key => a.patch[key] === b.patch[key])
+    && JSON.stringify([...new Set(a.patch.enabled)].sort()) === JSON.stringify([...new Set(b.patch.enabled)].sort());
+}
+
+export type Preset = { id: string; title: string; desc: string; recipe: Recipe };
+
+const withPatches = (enabled: PatchOptions["enabled"], encode: Partial<EncodeOptions> = {}): Recipe => ({
   encode: { ...DEFAULT_ENCODE, ...encode },
   patch: { ...DEFAULT_PATCH, enabled },
 });
 
-const withSilentTail = (encode) => ({
+const withSilentTail = (encode: Partial<EncodeOptions>): Recipe => ({
   ...withPatches([], encode), method: "silent-tail",
 });
 
 /** Independent options. The controlled comparison below uses only three shared-source arms. */
-export const PRESETS = [
+export const PRESETS: Preset[] = [
   { id: "silent-tail", title: "Silent-tail (default)", desc: "Re-encodes to H.264/AAC stereo, then adds a short silent audio tail and a second audio track. Experimental; TikTok quality and retention can vary.", recipe: DEFAULT_RECIPE },
   { id: "current", title: "Original OQM", desc: "Clean H.264 re-encode (quality 17) + the original full patch set. The previous website default and desktop method.", recipe: withPatches(REFERENCE) },
   { id: "1080p", title: "1080p — high quality", desc: "H.264 at a target 20 Mbps, up to 1080p and 60 fps, AAC audio. Keeps lower source frame rates and dimensions. Uses the default silent-tail method with AAC stereo. TikTok results can vary.", recipe: withSilentTail({ reencode: true, rate: "bitrate", mbps: 20, size: "short-1080", fps: "source-max-60" }) },
@@ -56,9 +95,22 @@ export const PRESETS = [
   { id: "control", title: "Control: no patch", desc: "Same re-encode, normal container. If this does as well as the others, the patch isn't doing anything.", recipe: withPatches(["faststart"]) },
 ];
 
-const even = (n) => Math.max(2, Math.round(n / 2) * 2);
+export type Stage = { label: string; progress: number | null };
 
-async function probe(blob) {
+export type ConvertResult = {
+  blob: Blob;
+  checks: Check[];
+  applied: string[];
+  skipped: string[];
+  notes: string[];
+  info: { width: number; height: number; fps: number; codec: string; mbps: number; duration: number; reencoded: boolean };
+};
+
+const even = (n: number) => Math.max(2, Math.round(n / 2) * 2);
+
+type Probe = { width: number; height: number; fps: number; duration: number; codec: string; packets: number; hasAudio: boolean; channels: number; mbps: number; hdr: boolean };
+
+async function probe(blob: Blob): Promise<Probe> {
   const input = new Input({ source: new BlobSource(blob), formats: ALL_FORMATS });
   try {
     const video = await input.getPrimaryVideoTrack();
@@ -86,7 +138,7 @@ async function probe(blob) {
   }
 }
 
-export function targetSize(src , mode) {
+export function targetSize(src: Pick<Probe, "width" | "height">, mode: SizeMode): { width?: number; height?: number } {
   if (mode === "original") return {};
   const target = Number(mode.split("-")[1]);
   const short = Math.min(src.width, src.height);
@@ -95,12 +147,12 @@ export function targetSize(src , mode) {
   return { width: even(src.width * scale), height: even(src.height * scale) };
 }
 
-export function targetFrameRate(sourceFps , mode) {
+export function targetFrameRate(sourceFps: number, mode: EncodeOptions["fps"]): number | undefined {
   if (mode === "source-max-60") return sourceFps > 60 ? 60 : undefined;
   return mode ?? undefined;
 }
 
-function quality(e , width , height , fps) {
+function quality(e: EncodeOptions, width: number, height: number, fps: number): Quality {
   // Bitrate fallback for browsers without quantizer encoding: ~0.25 bits per pixel per frame, capped at 40 Mbps.
   const fallback = Math.min(40e6, Math.round(width * height * fps * 0.25));
   if (e.rate === "quantizer") return new Quality({ quantizer: e.quantizer, bitrate: fallback });
@@ -108,10 +160,10 @@ function quality(e , width , height , fps) {
   return new Quality(e.rate);
 }
 
-let proresDecoderReady ;
+let proresDecoderReady: Promise<void> | undefined;
 
 /** Load the local software decoder only for ProRes inputs, before capability checks cache their result. */
-export async function prepareInputDecoders(input , onStage = () => {}, signal) {
+export async function prepareInputDecoders(input: Input, onStage: (s: Stage) => void = () => {}, signal?: AbortSignal) {
   const video = await input.getPrimaryVideoTrack();
   if (video?.codec === "prores") {
     onStage({ label: "Loading ProRes support", progress: null });
@@ -135,7 +187,7 @@ export async function prepareInputDecoders(input , onStage = () => {}, signal) {
   }
 }
 
-async function runConversion(conversion , onStage , label , signal) {
+async function runConversion(conversion: Conversion, onStage: (s: Stage) => void, label: string, signal?: AbortSignal) {
   if (signal?.aborted) {
     await conversion.cancel();
     throw new OqmError("Stopped.");
@@ -157,9 +209,9 @@ async function runConversion(conversion , onStage , label , signal) {
 }
 
 /** Chrome's AAC encoder fails intermittently above ~160 kbps per channel (mono at 320 kbps errors out), so cap it. */
-const audioBitrate = (kbps , channels) => Math.min(kbps, 160 * Math.max(1, Math.min(channels, 2))) * 1000;
+const audioBitrate = (kbps: number, channels: number) => Math.min(kbps, 160 * Math.max(1, Math.min(channels, 2))) * 1000;
 
-async function reencode(file , src , e , onStage , signal , stereo = false) {
+async function reencode(file: Blob, src: Probe, e: EncodeOptions, onStage: (s: Stage) => void, signal?: AbortSignal, stereo = false) {
   try {
     return await reencodeOnce(file, src, e, audioBitrate(e.audioKbps, stereo ? 2 : src.channels), onStage, signal, stereo);
   } catch (error) {
@@ -169,7 +221,7 @@ async function reencode(file , src , e , onStage , signal , stereo = false) {
   }
 }
 
-async function reencodeOnce(file , src , e , audioBps , onStage , signal , stereo = false) {
+async function reencodeOnce(file: Blob, src: Probe, e: EncodeOptions, audioBps: number, onStage: (s: Stage) => void, signal?: AbortSignal, stereo = false) {
   if (src.hdr) throw new OqmError("HDR/wide-gamut re-encoding needs explicit colour conversion. Use an SDR master; test HDR separately.");
   if (typeof VideoEncoder === "undefined") {
     throw new OqmError("This browser can't encode video. Use a recent Chrome, Edge or Safari, or turn off re-encode in the options.");
@@ -183,7 +235,6 @@ async function reencodeOnce(file , src , e , audioBps , onStage , signal , stere
   if (!(await canEncodeVideo(e.codec, { width, height, frameRate: fps, quality: videoQuality }))) {
     throw new OqmError(`This browser can't encode ${e.codec === "hevc" ? "H.265" : "H.264"} at ${width}x${height}, ${fps.toFixed(2)} fps with these settings. Try the 1080p preset or a lower bitrate.`);
   }
-  const aacEncodable = !src.hasAudio || (await canEncodeAudio("aac", { numberOfChannels: stereo ? 2 : Math.min(src.channels, 2), sampleRate: 48000, bitrate: audioBps }).catch(() => false));
   const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
   const output = new Output({ format: new Mp4OutputFormat({ fastStart: "in-memory" }), target: new BufferTarget() });
   try {
@@ -204,10 +255,7 @@ async function reencodeOnce(file , src , e , audioBps , onStage , signal , stere
         hardwareAcceleration: e.hardware,
         forceTranscode: true,
       },
-      // Edge/Chrome on Windows often has no AAC encoder. Then keep the source audio as-is (stream copy) instead of failing.
-      audio: aacEncodable
-        ? { codec: "aac", bitrate: audioBps, sampleRate: 48000, ...(stereo ? { numberOfChannels: 2 } : {}), forceTranscode: true }
-        : { forceTranscode: false },
+      audio: { codec: "aac", bitrate: audioBps, sampleRate: 48000, ...(stereo ? { numberOfChannels: 2 } : {}), forceTranscode: true },
       // The desktop app strips metadata on export (-map_metadata -1).
       tags: () => ({}),
     });
@@ -215,11 +263,11 @@ async function reencodeOnce(file , src , e , audioBps , onStage , signal , stere
   } finally {
     input.dispose();
   }
-  return new Blob([output.target.buffer ], { type: "video/mp4" });
+  return new Blob([output.target.buffer!], { type: "video/mp4" });
 }
 
 /** Stream-copy the primary video + audio into a clean MP4. Only used when the file isn't patchable as-is. */
-async function remux(file , onStage , signal) {
+async function remux(file: Blob, onStage: (s: Stage) => void, signal?: AbortSignal) {
   const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
   const output = new Output({ format: new Mp4OutputFormat({ fastStart: "in-memory" }), target: new BufferTarget() });
   try {
@@ -231,21 +279,21 @@ async function remux(file , onStage , signal) {
   } finally {
     input.dispose();
   }
-  return new Blob([output.target.buffer ], { type: "video/mp4" });
+  return new Blob([output.target.buffer!], { type: "video/mp4" });
 }
 
 export async function convert(
-  file ,
-  recipe ,
-  onStage = () => {},
-  signal ,
-) {
+  file: File,
+  recipe: Recipe,
+  onStage: (s: Stage) => void = () => {},
+  signal?: AbortSignal,
+): Promise<ConvertResult> {
   if (signal?.aborted) throw new OqmError("Stopped.");
   onStage({ label: "Reading your video", progress: null });
   const src = await probe(file);
   if (signal?.aborted) throw new OqmError("Stopped.");
 
-  let base = file;
+  let base: Blob = file;
   if (recipe.encode.reencode) base = await reencode(file, src, recipe.encode, onStage, signal, recipe.method === "silent-tail");
   else if (!(await isPatchReady(file))) base = await remux(file, onStage, signal);
   if (signal?.aborted) throw new OqmError("Stopped.");
@@ -259,7 +307,7 @@ export async function convert(
   const after = await probe(result.blob);
   if (signal?.aborted) throw new OqmError("Stopped.");
   const frame = before.fps ? 1 / before.fps : 0.05;
-  const checks = [
+  const checks: Check[] = [
     ...result.checks,
     { name: "Video dimensions unchanged by patch", ok: after.width === before.width && after.height === before.height, detail: `${before.width}x${before.height} -> ${after.width}x${after.height}` },
     { name: "Video frame rate unchanged by patch", ok: Math.abs(after.fps - before.fps) < 0.01, detail: `${before.fps.toFixed(3)} -> ${after.fps.toFixed(3)} fps` },
@@ -290,14 +338,14 @@ export async function convert(
 }
 
 /** Prepare once, then use these identical encoded packets for all comparison arms. */
-export async function prepareComparison(file , encode , onStage , signal) {
+export async function prepareComparison(file: File, encode: EncodeOptions, onStage: (s: Stage) => void, signal?: AbortSignal): Promise<File> {
   const src = await probe(file);
   if (src.hdr) throw new OqmError("Use an SDR master. HDR is a separate test.");
   const base = encode.reencode ? await reencode(file, src, encode, onStage, signal, true) : await remux(file, onStage, signal);
   if (signal?.aborted) throw new OqmError("Stopped.");
   return new File([base], file.name.replace(/\.[^.]+$/, "") + "_shared.mp4", { type: "video/mp4" });
 }
-export const COMPARISON_PRESETS = [
+export const COMPARISON_PRESETS: Preset[] = [
   { id: "clean", title: "A: Clean MP4", desc: "Shared encoded source, normal container.", recipe: withPatches(["faststart"], { reencode: false }) },
   { id: "current", title: "B: Current OQM", desc: "Shared encoded source, current full patch set.", recipe: withPatches(REFERENCE, { reencode: false }) },
   { id: "silent-tail", title: "C: Silent-tail", desc: "Shared encoded source, experimental silent-tail only.", recipe: { ...withPatches([], { reencode: false }), method: "silent-tail" } },
