@@ -1,7 +1,3 @@
-/** Experimental port of the silent-tail recipe in buwryme/tiktok-lossless-upload
- * commit 348c179f21eef1202d22faabf704b80d78f216ca. Attribution/license: THIRD_PARTY_NOTICES.md.
- * No legacy patches are layered onto this recipe. Original media stays at its original offsets.
- */
 import { Box, OqmError, readTopLevel } from "./patch.js";
 const rates = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350];
 const silentFrame = Uint8Array.of(33, 16, 4, 96, 140, 28);
