@@ -534,4 +534,125 @@
             processBtn.style.display = '';
         }
 
-        function handleFile
+        function handleFile(file) {
+            if (!isVideo(file)) {
+                alert('กรุณาเลือกไฟล์วิดีโอ');
+                return;
+            }
+            resetResult();
+            selectedFile = file;
+            fileInfo.style.display = 'block';
+            fileInfo.textContent = `ไฟล์ที่เลือก: ${file.name}`;
+            processBtn.disabled = false;
+            progressContainer.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            processBtn.textContent = 'เริ่มประมวลผล';
+        }
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fileInput.click();
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+            // Allow picking the same file again (otherwise 'change' won't fire).
+            fileInput.value = '';
+        });
+
+        // Drag and drop handlers
+        ['dragenter', 'dragover'].forEach(evt => {
+            dropZone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('dragover');
+            });
+        });
+        ['dragleave', 'drop'].forEach(evt => {
+            dropZone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('dragover');
+            });
+        });
+        dropZone.addEventListener('drop', (e) => {
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        processBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            processBtn.disabled = true;
+            processBtn.textContent = 'กำลังประมวลผล...';
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressBar.style.background = 'linear-gradient(90deg, var(--accent-blue), var(--accent-blue-light))';
+            progressText.textContent = 'กำลังอ่านไฟล์...';
+
+            try {
+                if (!window.FISH) {
+                    progressText.textContent = 'กำลังโหลดเอนจิน...';
+                    if (!window.FISH_PROMISE) throw new Error('โหลดเอนจินไม่สำเร็จ (ตรวจสอบอินเทอร์เน็ต แล้วรีเฟรชหน้า)');
+                    await window.FISH_PROMISE;
+                }
+
+                const result = await window.FISH.convert(selectedFile, window.FISH.DEFAULT_RECIPE, (stage) => {
+                    if (typeof stage.progress === 'number') {
+                        progressBar.style.width = Math.round(stage.progress * 100) + '%';
+                        progressText.textContent = `${stage.label}... ${Math.round(stage.progress * 100)}%`;
+                    } else {
+                        progressText.textContent = stage.label + '...';
+                    }
+                });
+
+                progressBar.style.width = '100%';
+                progressText.textContent = 'ประมวลผลเสร็จสิ้น';
+
+                const oldUrl = downloadBtn.dataset.url;
+                if (oldUrl) URL.revokeObjectURL(oldUrl);
+                const url = URL.createObjectURL(result.blob);
+                downloadBtn.dataset.url = url;
+                downloadBtn.dataset.name = selectedFile.name.replace(/\.[^/.]+$/, '') + '_Corn_Method.mp4';
+
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    processBtn.style.display = 'none';
+                    downloadBtn.style.display = 'inline-flex';
+                }, 500);
+
+            } catch (err) {
+                console.error(err);
+                progressText.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+                progressBar.style.background = '#ff4444';
+                processBtn.disabled = false;
+                processBtn.textContent = 'ลองใหม่';
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const url = downloadBtn.dataset.url;
+            const name = downloadBtn.dataset.name || 'Corn_Method.mp4';
+            if (!url) return;
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            // Hide download button, show TikTok button
+            downloadBtn.style.display = 'none';
+            tiktokBtn.style.display = 'inline-flex';
+        });
+
+        tiktokBtn.addEventListener('click', () => {
+            window.open('https://www.tiktok.com/tiktokstudio/upload', '_blank', 'noopener,noreferrer');
+        });
+    </script>
+</body>
+</html>
