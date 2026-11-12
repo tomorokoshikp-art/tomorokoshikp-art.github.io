@@ -294,7 +294,7 @@ export async function convert(
   signal?: AbortSignal,
 ): Promise<ConvertResult> {
   if (signal?.aborted) throw new OqmError("Stopped.");
-  onStage({ label: "กำลังอ่านวิดีโอ...", progress: null });
+  onStage({ label: "กำลังอ่านวิดีโอ", progress: null });
   const src = await probe(file);
   if (signal?.aborted) throw new OqmError("Stopped.");
 
