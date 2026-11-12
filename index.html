@@ -624,7 +624,12 @@
 
             } catch (err) {
                 console.error(err);
-                progressText.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+                let msg = (err && err.message) ? err.message : String(err);
+                // Raw browser codec errors (common on mobile) -> same message as desktop.
+                if (/decod|encod|codec/i.test(msg) && !/[฀-๿]/.test(msg)) {
+                    msg = 'เบราว์เซอร์ไม่รองรับให้เปลี่ยนไปใช้ Chrome แทน';
+                }
+                progressText.textContent = 'เกิดข้อผิดพลาด: ' + msg;
                 progressBar.style.background = '#ff4444';
                 processBtn.disabled = false;
                 processBtn.textContent = 'ลองใหม่';
