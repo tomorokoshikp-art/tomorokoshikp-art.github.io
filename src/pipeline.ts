@@ -303,11 +303,11 @@ export async function convert(
   else if (!(await isPatchReady(file))) base = await remux(file, onStage, signal);
   if (signal?.aborted) throw new OqmError("Stopped.");
 
-  onStage({ label: "Applying the patch", progress: null });
+  onStage({ label: "กำลังใช้แพทช์", progress: null });
   const result = recipe.method === "silent-tail" ? await silentTail(base) : await patchVideo(base, recipe.patch);
   if (signal?.aborted) throw new OqmError("Stopped.");
 
-  onStage({ label: "Checking the result", progress: null });
+  onStage({ label: "กำลังตรวจสอบผลลัพธ์", progress: null });
   const before = base === file ? src : await probe(base);
   const after = await probe(result.blob);
   if (signal?.aborted) throw new OqmError("Stopped.");
