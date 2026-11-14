@@ -1,8 +1,71 @@
 import { Box, OqmError, readTopLevel } from "./patch.js";
 const rates = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350];
 const silentFrame = Uint8Array.of(33, 16, 4, 96, 140, 28);
+const thaiDetails = {
+    "truncated header": "ส่วนหัวของไฟล์ไม่สมบูรณ์",
+    "unsupported large integer": "ไฟล์มีค่าตัวเลขขนาดใหญ่เกินที่รองรับ",
+    "header value overflow": "ค่าในส่วนหัวของไฟล์เกินขนาดที่รองรับ",
+    "movie index nesting too deep": "โครงสร้างดัชนีวิดีโอซ้อนกันลึกเกินไป",
+    "truncated child box": "ข้อมูลย่อยในไฟล์ไม่สมบูรณ์",
+    "unsupported or truncated child box": "ข้อมูลย่อยในไฟล์ไม่รองรับหรือไม่สมบูรณ์",
+    "unsupported header version": "ไม่รองรับเวอร์ชันของส่วนหัวไฟล์",
+    "missing AAC descriptor": "ไม่พบข้อมูลคำอธิบายเสียง AAC",
+    "truncated AAC descriptor": "ข้อมูลคำอธิบายเสียง AAC ไม่สมบูรณ์",
+    "invalid AAC descriptor length": "ความยาวข้อมูลคำอธิบายเสียง AAC ไม่ถูกต้อง",
+    "invalid AAC descriptor": "ข้อมูลคำอธิบายเสียง AAC ไม่ถูกต้อง",
+    "unsupported audio sample descriptions": "ไม่รองรับรูปแบบข้อมูลตัวอย่างเสียงนี้",
+    "audio must be unencrypted AAC stereo": "เสียงต้องเป็น AAC สเตอริโอที่ไม่ได้เข้ารหัส",
+    "unsupported AAC description": "ไม่รองรับข้อมูลคำอธิบายเสียง AAC นี้",
+    "unsupported esds flags": "ไม่รองรับแฟลก esds ของไฟล์นี้",
+    "unsupported ES descriptor": "ไม่รองรับ ES descriptor ของไฟล์นี้",
+    "audio must be AAC": "เสียงต้องเป็นรูปแบบ AAC",
+    "audio must be AAC-LC stereo": "เสียงต้องเป็น AAC-LC สเตอริโอ",
+    "unsupported AAC configuration": "ไม่รองรับการตั้งค่า AAC ของไฟล์นี้",
+    "missing AAC configuration": "ไม่พบการตั้งค่า AAC",
+    "unsupported file layout or already patched file": "โครงสร้างไฟล์ไม่รองรับ หรือไฟล์นี้ถูกปรับแต่งไปแล้ว",
+    "unsupported movie index": "ไม่รองรับดัชนีวิดีโอของไฟล์นี้",
+    "requires one video and one audio track": "ไฟล์ต้องมีแทร็กวิดีโอ 1 แทร็ก และแทร็กเสียง 1 แทร็กเท่านั้น",
+    "external media references unsupported": "ไม่รองรับไฟล์ที่อ้างอิงสื่อจากภายนอก",
+    "unsupported audio sample table": "ไม่รองรับตารางตัวอย่างเสียงของไฟล์นี้",
+    "invalid sample sizes": "ขนาดตัวอย่างเสียงไม่ถูกต้อง",
+    "duplicate chunk tables": "พบตารางข้อมูลเสียงซ้ำกัน",
+    "invalid audio chunks": "ข้อมูลเสียงแบบก้อนไม่ถูกต้อง",
+    "invalid audio chunk mapping": "การจับคู่ก้อนข้อมูลเสียงไม่ถูกต้อง",
+    "invalid sample count": "จำนวนตัวอย่างเสียงไม่ถูกต้อง",
+    "empty audio sample": "พบตัวอย่างเสียงที่ว่างเปล่า",
+    "audio chunk outside media data": "ก้อนข้อมูลเสียงอยู่นอกส่วนข้อมูลสื่อ",
+    "incomplete audio mapping": "การจับคู่ข้อมูลเสียงไม่สมบูรณ์",
+    "invalid audio timing": "เวลาของเสียงไม่ถูกต้อง",
+    "audio timing/sample mismatch": "เวลาของเสียงไม่ตรงกับจำนวนตัวอย่าง",
+    "inconsistent audio duration": "ความยาวของเสียงไม่สอดคล้องกัน",
+    "unsupported audio groups": "ไม่รองรับกลุ่มข้อมูลเสียงของไฟล์นี้",
+    "invalid audio groups": "กลุ่มข้อมูลเสียงไม่ถูกต้อง",
+    "invalid grouped sample count": "จำนวนตัวอย่างเสียงในกลุ่มไม่ถูกต้อง",
+    "unsupported audio composition offsets": "ไม่รองรับค่าชดเชยเวลาของเสียงในไฟล์นี้",
+    "incomplete composition table": "ตารางเวลาของเสียงไม่สมบูรณ์",
+    "invalid audio sync table": "ตารางซิงค์เสียงไม่ถูกต้อง",
+    "invalid dependency table": "ตารางความสัมพันธ์ของข้อมูลไม่ถูกต้อง",
+    "invalid silent tail duration": "ความยาวช่วงท้ายเงียบไม่ถูกต้อง",
+    "unsupported audio edit list": "ไม่รองรับรายการตัดต่อเสียงของไฟล์นี้",
+    "inconsistent audio edit list": "รายการตัดต่อเสียงไม่สอดคล้องกัน",
+    "unsupported empty edit": "ไม่รองรับการตัดต่อแบบว่างเปล่า",
+    "unsupported priming trim": "ไม่รองรับการตัดช่วงเริ่มต้นของเสียง",
+    "inconsistent untrimmed audio": "ความยาวเสียงที่ไม่ได้ตัดไม่สอดคล้องกัน",
+    "invalid tail timing": "เวลาช่วงท้ายไม่ถูกต้อง",
+    "duplicate track identifiers": "พบรหัสแทร็กซ้ำกัน",
+    "oversized zero-length box": "พบข้อมูลที่มีขนาดใหญ่เกินไป",
+};
+const thaiDetail = (detail) => {
+    if (thaiDetails[detail]) return thaiDetails[detail];
+    let m = /^missing (.+)$/.exec(detail);
+    if (m) return `ไม่พบข้อมูล ${m[1]} ในไฟล์`;
+    m = /^invalid (\w+) table$/.exec(detail);
+    if (m) return `ตาราง ${m[1]} ไม่ถูกต้อง`;
+    return detail;
+};
+const thaiSuffix = "โปรดใช้ไฟล์ MP4 ที่สมบูรณ์ซึ่งมีแทร็กเสียง AAC-LC สเตอริโอเพียงแทร็กเดียว";
 const requireThat = (ok, detail) => { if (!ok)
-    throw new OqmError(`Silent-tail: ${detail}. Use a clean MP4 with one AAC-LC stereo audio track.`); };
+    throw new OqmError(`${thaiDetail(detail)} — ${thaiSuffix}`); };
 const dv = (b) => new DataView(b.buffer, b.byteOffset, b.byteLength);
 const read = (b, at, width = 4) => {
     requireThat(at >= 0 && at + width <= b.length, "truncated header");
@@ -63,7 +126,7 @@ function descriptor(data, start) {
             return { tag: data[start], start: pos, end: pos + length };
         }
     }
-    throw new OqmError("Silent-tail: invalid AAC descriptor.");
+    throw new OqmError(`${thaiDetail("invalid AAC descriptor")} — ${thaiSuffix}`);
 }
 const packDescriptor = (tag, b) => join(Uint8Array.of(tag, 128 | (b.length >> 21), 128 | ((b.length >> 14) & 127), 128 | ((b.length >> 7) & 127), b.length & 127), b);
 function audioDescription(stsd) {
