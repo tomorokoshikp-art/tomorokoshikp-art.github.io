@@ -119,7 +119,7 @@ export async function silentTail(file) {
     catch (error) {
         if (error instanceof OqmError)
             throw error;
-        throw new OqmError("Silent-tail: unsupported or malformed MP4. Use the current recipe or a clean AAC-LC stereo export.");
+        throw new OqmError("ไฟล์ MP4 ไม่รองรับหรือมีรูปแบบไม่ถูกต้อง โปรดใช้สูตรการตั้งค่า (recipe) ปัจจุบัน หรือส่งออกไฟล์ใหม่เป็น AAC-LC แบบสเตอริโอที่สมบูรณ์");
     }
 }
 async function patchSilentTail(file) {
