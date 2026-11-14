@@ -227,17 +227,26 @@ async function patchSilentTail(file) {
     }
     requireThat(sampled === samples, "incomplete audio mapping");
     const stts = child(stbl, "stts"), timings = tableCount(stts, 8), timing = [];
-    let audioDuration = 0, timed = 0;
+    const mdhd = child(media, "mdhd"), mvhd = child(root, "mvhd"), tkhd = child(audio, "tkhd");
+    const ah = fields(mdhd), mh = fields(mvhd), th = fields(tkhd), rate = description.sampleRate;
+    // Tolerate slightly damaged timing tables: skip empty runs and give zero-length samples a normal AAC frame duration.
+    const frameDelta = Math.max(1, Math.round(1024 * ah.scale / rate));
+    let audioDuration = 0, timed = 0, lastDelta = frameDelta;
     for (let i = 0; i < timings; i++) {
-        const count = read(stts.payload, 8 + 8 * i), delta = read(stts.payload, 12 + 8 * i);
-        requireThat(count > 0 && delta > 0, "invalid audio timing");
-        timing.push([count, delta]);
+        const count = read(stts.payload, 8 + 8 * i);
+        let delta = read(stts.payload, 12 + 8 * i);
+        if (count === 0) continue;
+        if (delta === 0) delta = lastDelta;
+        else lastDelta = delta;
+        if (timing.length && timing[timing.length - 1][1] === delta)
+            timing[timing.length - 1][0] += count;
+        else
+            timing.push([count, delta]);
         timed += count;
         audioDuration += count * delta;
     }
+    requireThat(timing.length > 0, "invalid audio timing");
     requireThat(timed === samples, "audio timing/sample mismatch");
-    const mdhd = child(media, "mdhd"), mvhd = child(root, "mvhd"), tkhd = child(audio, "tkhd");
-    const ah = fields(mdhd), mh = fields(mvhd), th = fields(tkhd), rate = description.sampleRate;
     requireThat(ah.scale > 0 && mh.scale > 0 && ah.duration > 0 && Math.abs(ah.duration - audioDuration) <= Math.ceil(2048 * ah.scale / rate) && (tkhd.payload[3] & 1) && th.duration > 0, "inconsistent audio duration");
     const tailFrames = Math.max(10, Math.ceil(.35 * rate / 1024));
     for (const item of stbl.children) {
@@ -299,7 +308,8 @@ async function patchSilentTail(file) {
         write(p, at, segment + editExtra, width);
     }
     else
-        requireThat(Math.abs(th.duration - Math.round(audioDuration * mh.scale / ah.scale)) <= 1, "inconsistent untrimmed audio");
+        // No edit list: if the track header duration disagrees with the real audio length, trust the audio samples and correct it.
+        editExtra += Math.round(audioDuration * mh.scale / ah.scale) - th.duration;
     write(tkhd.payload, th.offset, th.duration + editExtra, th.width);
     write(mdhd.payload, ah.offset, ah.duration + audioTail, ah.width);
     for (let i = 0; i < tailFrames; i++) {
